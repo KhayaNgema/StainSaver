@@ -1,18 +1,42 @@
 ﻿@model List<StainSaver.Models.Booking>
+@using System.Globalization
 @{
     ViewData["Title"] = "Booking Status Report";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    // Group bookings by status and count
-    var statusCounts = Model
+
+    string? fromQuery = Context.Request.Query["from"];
+    string? toQuery = Context.Request.Query["to"];
+
+    DateTime? fromDate = null;
+    DateTime? toDate = null;
+
+    if (DateTime.TryParseExact(fromQuery, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fd))
+    {
+        fromDate = fd;
+    }
+    if (DateTime.TryParseExact(toQuery, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var td))
+    {
+        toDate = td;
+    }
+
+    var filteredBookings = Model.AsQueryable();
+    if (fromDate.HasValue)
+    {
+        filteredBookings = filteredBookings.Where(b => b.BookingDate.Date >= fromDate.Value.Date);
+    }
+    if (toDate.HasValue)
+    {
+        filteredBookings = filteredBookings.Where(b => b.BookingDate.Date <= toDate.Value.Date);
+    }
+
+    var statusCounts = filteredBookings
         .GroupBy(b => b.Status)
         .Select(g => new { Status = g.Key.ToString(), Count = g.Count() })
         .ToList();
-    // Prepare data for JavaScript
+
     var labels = statusCounts.Select(sc => sc.Status).ToArray();
     var data = statusCounts.Select(sc => sc.Count).ToArray();
 }
-
-<h1></h1>
 <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
         <div class="d-flex align-items-center">
@@ -22,24 +46,31 @@
             <i class="fas fa-arrow-left me-2"></i>Dashboards
         </a>
     </div>
+    <form method="get" class="d-flex align-items-end gap-2 mb-1" style="max-width: 480px; flex-wrap: nowrap;">
+        <div class="flex-grow-1">
+            <label for="fromDate" class="form-label text-dark mb-1">From</label>
+            <input type="date" id="fromDate" name="from" value="@(fromDate?.ToString("yyyy-MM-dd") ?? "")" class="form-control" />
+        </div>
+        <div class="flex-grow-1">
+            <label for="toDate" class="form-label text-dark mb-1">To</label>
+            <input type="date" id="toDate" name="to" value="@(toDate?.ToString("yyyy-MM-dd") ?? "")" class="form-control" />
+        </div>
+        <div>
+            <button type="submit" class="btn btn-success" style="width: auto; min-width: 100px;">Filter</button>
+        </div>
+    </form>
+    <div style="max-width: 480px; margin: auto;">
+        <canvas id="bookingStatusChart"></canvas>
+    </div>
 </div>
-<div style="max-width: 480px; margin: auto;">
-    <canvas id="bookingStatusChart"></canvas>
-</div>
-
 @section Styles {
     <style>
-        /* Optional: reduce legend font size to save space */
-        #bookingStatusChart + .chartjs-render-monitor + canvas {
-            max-width: 100%;
-        }
-        .chartjs-render-monitor {
+        #bookingStatusChart {
             max-width: 100% !important;
             height: auto !important;
         }
     </style>
 }
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

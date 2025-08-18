@@ -40,12 +40,22 @@ namespace StainSaver.Areas.Admin.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> BookingReports()
+        public async Task<IActionResult> BookingReports(DateTime? from, DateTime? to)
         {
-            List<Booking> bookings = await _context.Bookings.ToListAsync();
+            var bookings = await _context.Bookings.ToListAsync();
+
+            if (from.HasValue)
+            {
+                bookings = bookings.Where(b => b.BookingDate.Date >= from.Value.Date).ToList();
+            }
+            if (to.HasValue)
+            {
+                bookings = bookings.Where(b => b.BookingDate.Date <= to.Value.Date).ToList();
+            }
 
             return View(bookings);
         }
+
 
         public async Task<IActionResult> RefundReports()
         {
