@@ -21,6 +21,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddTransient<ReceiveItemsService>();
 builder.Services.AddTransient<FileUploadService>();
 builder.Services.AddTransient<SmsService>();
+builder.Services.AddTransient<SendRefundSms>();
 builder.Services.AddTransient<PickUpSmsService>();
 builder.Services.AddTransient<BarcodeService>();
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>

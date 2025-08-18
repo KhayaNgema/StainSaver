@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using HospitalManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,15 +20,18 @@ namespace StainSaver.Areas.Admin.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FileUploadService _fileUploadService;
         private readonly BarcodeService _barcodeService;
+        private readonly SendRefundSms _sendRefundSms;
         public ComplainsController(ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             FileUploadService fileUploadService,
-            BarcodeService barcodeService)
+            BarcodeService barcodeService,
+            SendRefundSms sendRefundSms)
         {
             _fileUploadService = fileUploadService;
             _context = context;
             _userManager = userManager;
             _barcodeService = barcodeService;
+            _sendRefundSms = sendRefundSms;
         }
         [HttpGet]
         public IActionResult SuccesfullyApproved(int id)
@@ -35,6 +39,14 @@ namespace StainSaver.Areas.Admin.Controllers
             ViewData["ComplainId"] = id;
             return View();
         }
+
+        [HttpGet]
+        public IActionResult SuccessfullyProcessed()
+        {
+            return View();
+        }
+
+        
 
         [HttpGet]
         public IActionResult SuccesfullyAssignedDriver(int id)
@@ -246,11 +258,16 @@ namespace StainSaver.Areas.Admin.Controllers
                         .ToList()
                 };
                 complainFromDb.Status = ComplainStatus.Refunded;
+
                 _context.Update(complainFromDb);
                 _context.Refunds.Add(refund);
                 await _context.SaveChangesAsync();
+
                 TempData["Message"] = "Refund processed successfully.";
-                return RedirectToAction("Details", "Complains", new { id = model.ComplainId });
+
+                BackgroundJob.Enqueue(() =>_sendRefundSms.NotifyRefundCustomerContactAsync(model.ComplainId));
+
+                return RedirectToAction(nameof(SuccessfullyProcessed));
             }
             catch (Exception ex)
             {

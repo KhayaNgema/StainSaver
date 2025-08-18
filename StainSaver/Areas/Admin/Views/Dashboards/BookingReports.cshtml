@@ -12,8 +12,17 @@
     var data = statusCounts.Select(sc => sc.Count).ToArray();
 }
 
-<h1>Booking Status Report</h1>
-
+<h1></h1>
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Booking Status Report</h2>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboards" asp-action="Dashboards" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Dashboards
+        </a>
+    </div>
+</div>
 <div style="max-width: 480px; margin: auto;">
     <canvas id="bookingStatusChart"></canvas>
 </div>

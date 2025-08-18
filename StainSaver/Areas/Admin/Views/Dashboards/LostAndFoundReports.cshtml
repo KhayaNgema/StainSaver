@@ -1,5 +1,120 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<StainSaver.Models.Complain>
 @{
+    ViewData["Title"] = "Lost & Found Complain Status Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int chartWidth = 1200;
+    int chartHeight = 410;
+
+    var lostComplains = Model.Where(c => c.IsLost).ToList();
+    var foundComplains = Model.Where(c => c.IsFound).ToList();
+    var refundComplains = Model.Where(c => c.ComplainType == ComplainType.Refund).ToList();
+
+    var lostCounts = lostComplains
+        .GroupBy(c => c.Status)
+        .Select(g => new { Type = "Lost", Status = g.Key.ToString(), Count = g.Count() })
+        .ToList();
+
+    var foundCounts = foundComplains
+        .GroupBy(c => c.Status)
+        .Select(g => new { Type = "Found", Status = g.Key.ToString(), Count = g.Count() })
+        .ToList();
+
+    var refundCounts = refundComplains
+        .GroupBy(c => c.Status)
+        .Select(g => new { Type = "Refund", Status = g.Key.ToString(), Count = g.Count() })
+        .ToList();
+
+    var allStatuses = Enum.GetNames(typeof(StainSaver.Models.ComplainStatus));
+    var lostData = allStatuses.Select(status => lostCounts.FirstOrDefault(l => l.Status == status)?.Count ?? 0).ToArray();
+    var foundData = allStatuses.Select(status => foundCounts.FirstOrDefault(f => f.Status == status)?.Count ?? 0).ToArray();
+    var refundData = allStatuses.Select(status => refundCounts.FirstOrDefault(r => r.Status == status)?.Count ?? 0).ToArray();
+
+    var barLabels = allStatuses;
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Complains Reports & Analytics</h2>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboards" asp-action="Dashboards" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Dashboards
+        </a>
+    </div>
+</div>
+<div style="max-width:@chartWidth px; margin:auto; height:@chartHeight px;">
+    <canvas id="complainStatusChart" width="@chartWidth" height="@chartHeight"></canvas>
+</div>
+@section Styles {
+    <style>
+        #complainStatusChart + .chartjs-render-monitor + canvas {
+            max-width: 100%;
+        }
+        .chartjs-render-monitor {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+}
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('complainStatusChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(barLabels)),
+                datasets: [
+                    {
+                        label: 'Lost',
+                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(lostData)),
+                        backgroundColor: 'rgba(234, 93, 93, 0.7)',
+                        borderColor: 'rgba(214, 33, 33, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Found',
+                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(foundData)),
+                        backgroundColor: 'rgba(72, 170, 173, 0.7)',
+                        borderColor: 'rgba(72, 170, 173, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Refund',
+                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(refundData)),
+                        backgroundColor: 'rgba(0, 128, 0, 0.7)', // green
+                        borderColor: 'rgba(0, 100, 0, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 13
+                            },
+                            boxWidth: 16,
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complains' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Complain Status' },
+                        stacked: false
+                    }
+                }
+            }
+        });
+    </script>
 }

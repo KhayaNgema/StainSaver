@@ -75,7 +75,7 @@
 
 <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
-        <h2 class="mb-0 text-white">Complain [#@complain?.ReferenceNumber] - @complain?.ComplainType.GetDisplayName()</h2>
+        <h2 class="mb-0 text-white">Complain #@complain?.ReferenceNumber - @complain?.ComplainType.GetDisplayName()</h2>
         <a href="javascript:void(0);" class="btn btn-outline-light" onclick="history.back()">
             <i class="fas fa-arrow-left me-2"></i> Back to List
         </a>
@@ -226,11 +226,19 @@
                             </a>
                         </div>
                     }
-<div class="d-grid mt-3">
-    <a asp-area="Admin" asp-controller="Complains" asp-action="ScheduleDelivery" asp-route-packageId="@Model.PackageId" class="btn btn-outline-success btn-block">
-        Schedule Delivery
-    </a>
-</div>
+@if (Model.Driver != null)
+{
+
+}
+else
+{
+    <div class="d-grid mt-3">
+        <a asp-area="Admin" asp-controller="Complains" asp-action="ScheduleDelivery" asp-route-packageId="@Model.PackageId" class="btn btn-outline-success btn-block">
+            Schedule Delivery
+        </a>
+    </div>
+}
+
 
                 </div>
             </div>

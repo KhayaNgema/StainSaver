@@ -31,8 +31,12 @@ namespace StainSaver.Areas.Admin.Controllers
 
         public async Task<IActionResult> LostAndFoundReports()
         {
-            return View();
+            var complains = await _context.Complains
+                .ToListAsync();
+
+            return View(complains ?? new List<Complain>());
         }
+
 
 
         [HttpGet]

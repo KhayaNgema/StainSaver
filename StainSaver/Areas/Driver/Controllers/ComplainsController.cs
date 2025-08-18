@@ -77,7 +77,9 @@ namespace StainSaver.Areas.Driver.Controllers
             var user = await _userManager.GetUserAsync(User);
 
             var deliveries = await _context.Deliveries
-                .Where(pu => pu.DriverId == user.Id)
+                .Where(pu => pu.DriverId == user.Id &&
+                pu.Status == DeliveryStatus.DriverAssigned ||
+                pu.Status == DeliveryStatus.Delivering)
                 .Include(pu => pu.Complain)
                     .ThenInclude(c => c.Customer)
                 .Include(pu => pu.Complain)
@@ -92,7 +94,9 @@ namespace StainSaver.Areas.Driver.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var pickUps = await _context.PickUps
-                .Where(pu => pu.DriverId == user.Id)
+                .Where(pu => pu.DriverId == user.Id &&
+                pu.Status == PickUpStatus.DriverAssigned ||
+                pu.Status == PickUpStatus.PickingUp)
                 .Include(pu => pu.Complain)
                     .ThenInclude(c => c.Customer)
                 .Include(pu => pu.Complain)

@@ -12,7 +12,6 @@
             _ => "status-default"
         };
 }
-
 <style>
     .order-card-col {
         flex: 0 0 auto;
@@ -62,6 +61,7 @@
         word-wrap: normal;
         overflow-wrap: normal;
         white-space: normal;
+        transition: background-color 0.3s ease;
     }
     /* New status colors */
     .status-default {
@@ -140,16 +140,13 @@
     .d-flex.flex-column.flex-lg-row.flex-lg-wrap.overflow-auto.pb-3 {
         flex-direction: column;
     }
-
 </style>
-
 <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
         <h2 class="mb-0 text-white">Lost and Found Items Pick-Ups</h2>
         <a href="/" class="btn btn-outline-light"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
     </div>
 </div>
-
 <div class="container-fluid">
     @if (!Model.Any())
     {
@@ -160,7 +157,7 @@
         <div class="d-flex flex-column flex-lg-row flex-lg-wrap overflow-auto pb-3">
             @foreach (var pickUp in Model)
             {
-                <div class="order-card-col">
+                <div class="order-card-col" data-pickup-id="@pickUp.PickUpId">
                     <div class="card card-receipt">
                         <div class="card-header">
                             <div class="order-number">#@pickUp.ReferenceNumber</div>
@@ -192,11 +189,6 @@
                                     <i class="fas fa-truck-loading fa-lg"></i> Pick-up
                                 </button>
                             }
-                            <button class="btn btn-small btn-view-map"
-                                    data-pickup-id="@pickUp.PickUpId"
-                                    type="button">
-                                <i class="fas fa-location fa-lg"></i> See Location
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -204,7 +196,6 @@
         </div>
     }
 </div>
-
 <!-- Confirm Modal -->
 <div class="modal fade" id="confirmModal" tabindex="-1">
   <div class="modal-dialog modal-md modal-dialog-centered">
@@ -222,32 +213,88 @@
     </div>
   </div>
 </div>
-
 @section Scripts {
 <script>
     $(function () {
         var token = $('input[name="__RequestVerificationToken"]').val();
 
-        // Pick-up
+        // Helper function to update status text and class
+        function updateStatus(pickupId, newStatus) {
+            var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
+            var statusDiv = card.find('.order-status');
+            statusDiv.text(newStatus);
+
+            // Remove previous status classes
+            statusDiv.removeClass('status-default status-warning status-success');
+
+            switch (newStatus) {
+                case 'DriverAssigned':
+                    statusDiv.addClass('status-default');
+                    break;
+                case 'PickingUp':
+                    statusDiv.addClass('status-warning');
+                    break;
+                case 'Completed':
+                    statusDiv.addClass('status-success');
+                    break;
+                default:
+                    statusDiv.addClass('status-default');
+            }
+        }
+
+        // Helper to replace Pick-up button with Confirm button on status change to PickingUp
+        function switchToConfirmButton(pickupId) {
+            var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
+            var footer = card.find('.card-footer');
+
+            // Remove the Pick-up button
+            footer.find('.btn-pickup-action').remove();
+
+            // Add Confirm button
+            var btnConfirm = $(`
+                <button class="btn btn-small btn-confirm" data-pickup-id="${pickupId}" type="button">
+                    <i class="fas fa-check fa-lg"></i> Confirm Item
+                </button>
+            `);
+
+            // Insert Confirm button before See Location button
+            footer.prepend(btnConfirm);
+        }
+
+        // Pick-up button AJAX: update status & buttons on success
         $('.btn-pickup-action').on('click', function () {
-            var pickupId = $(this).data('pickup-id');
-            $.post('/Driver/Complains/PickUp', { pickupId: pickupId, __RequestVerificationToken: token });
+            var btn = $(this);
+            var pickupId = btn.data('pickup-id');
+            btn.prop('disabled', true);
+
+            $.post('/Driver/Complains/PickUp', { pickupId: pickupId, __RequestVerificationToken: token })
+                .done(function () {
+                    // Update status text & class in card header to "PickingUp"
+                    updateStatus(pickupId, 'PickingUp');
+
+                    // Switch Pick-up button to Confirm button
+                    switchToConfirmButton(pickupId);
+                })
+                .fail(function () {
+                    alert('Failed to update pick-up status.');
+                    btn.prop('disabled', false);
+                });
         });
 
-        // See Location
+        // See Location button
         $('.btn-view-map').on('click', function () {
             var id = $(this).data('pickup-id');
             window.open('/Driver/PickUps/Map/' + id, '_blank');
         });
 
-        // Confirm (load partial)
-        $('.btn-confirm').on('click', function () {
+        // Confirm button: load partial in modal
+        $(document).on('click', '.btn-confirm', function () {
             var id = $(this).data('pickup-id');
             $('#confirmModalBody').html('<div class="text-center py-5"><div class="spinner-border"></div><div>Loading...</div></div>');
             $.get('/Driver/Complains/LoadPickUpPartial?pickUpId=' + id, function (data) {
                 $('#confirmModalBody').html(data);
                 $('#confirmModal').modal('show');
-                initConfirmPickupForm(); // rebind JS inside modal
+                initConfirmPickupForm(); // rebind JS inside modal if needed
             });
         });
 
@@ -269,7 +316,7 @@
                 url: '@Url.Action("VerifyOtp", "Complains", new { area = "Driver" })',
                 type: 'POST',
                 headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    'RequestVerificationToken': token
                 },
                 data: { pickupId: pickupId, otpCode: otp },
                 success: function (data) {
@@ -290,21 +337,34 @@
             });
         });
 
-        // Confirm Pick-Up form submission
+        // Confirm Pick-Up form submission via AJAX
         $(document).on('submit', '#confirmPickUpForm', function (e) {
             e.preventDefault();
             var form = this;
             var fd = new FormData(form);
+            var pickupId = fd.get('PickUpId');
+
             fetch('/Driver/Complains/ConfirmPickUp', {
                 method: 'POST',
-                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                headers: { 'RequestVerificationToken': token },
                 body: fd
             })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     alert('Pick-Up confirmed successfully.');
-                    location.reload();
+
+                    // Close modal
+                    $('#confirmModal').modal('hide');
+
+                    // Update status text & class in card header to "Completed"
+                    updateStatus(pickupId, 'Completed');
+
+                    // Disable Confirm button and update text to "Confirmed"
+                    var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
+                    var confirmBtn = card.find('.btn-confirm');
+
+                    confirmBtn.prop('disabled', true).html('<i class="fas fa-check fa-lg"></i> Confirmed');
                 } else {
                     alert('Failed to confirm pick-up.');
                 }
@@ -313,13 +373,11 @@
                 alert('An error occurred during confirmation.');
             });
         });
-
     });
 
-    // Function to rebind form events in case of dynamic loading via partial views
+    // Function to rebind form events after modal partial load (currently no special logic needed)
     function initConfirmPickupForm() {
-        // Currently event delegation handles #verifyOtpBtn and #confirmPickUpForm submit
-        // So explicit rebind may not be necessary if using event delegation as above.
+        // Event delegation used, so no explicit rebinding required here.
     }
 </script>
 }

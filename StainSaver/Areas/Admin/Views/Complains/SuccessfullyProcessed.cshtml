@@ -1,0 +1,83 @@
+﻿@{
+    ViewData["Title"] = "Successfully Approved";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var complainId = ViewData["ComplainId"] ?? 0;
+}
+<style>
+    .center-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 60vh;
+        text-align: center;
+        color: #28a745; /* Bootstrap success green */
+    }
+
+    .check-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: #28a745;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+        animation: pulse 1.5s infinite;
+        position: relative;
+    }
+
+.checkmark {
+    font-size: 70px;
+    color: white !important;
+    display: inline-block;
+    line-height: 1;
+    user-select: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.checkmark.visible {
+    opacity: 1;
+}
+
+
+
+    .success-message {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #28a745;
+    }
+</style>
+
+<div class="center-container" role="alert" aria-live="assertive">
+    <div class="check-circle" aria-hidden="true">
+        <span class="checkmark" style="color:white">&#10004;</span>
+    </div>
+    <div class="success-message">
+        You have successfully processed this refund. Communication has ben sent to the relevant customer.
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var checkmark = document.querySelector('.checkmark');
+            if (checkmark) {
+                setTimeout(function () {
+                    checkmark.classList.add('visible');
+                }, 300);
+            }
+            setTimeout(function () {
+                var complainId = '@complainId';
+                if (complainId && complainId != '0') {
+                    window.location.href = '@Url.Action("RefundComplains", "Complains")/' + complainId;
+                } else {
+                    window.location.href = '@Url.Action("RefundComplains", "Complains")';
+                }
+            }, 5000);
+        });
+    </script>
+
+}

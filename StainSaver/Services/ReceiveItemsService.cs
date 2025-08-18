@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
-namespace HospitalManagement.Services
+namespace StainSaver.Services
 {
     public class ReceiveItemsService
     {

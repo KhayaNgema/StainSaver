@@ -5,9 +5,7 @@
     ViewData["Title"] = $"Complain Details - #{Model.ComplainId}";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var zaCulture = new CultureInfo("en-ZA");
-
     string NormalizePath(string path) => string.IsNullOrWhiteSpace(path) ? path : path.Replace("\\", "/");
-
     string GetStatusBadgeColor(ComplainStatus status) => status switch
     {
         ComplainStatus.Review => "secondary",
@@ -60,12 +58,22 @@
 </style>
 <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
-        <h2 class="mb-0 text-white">Complain [#@Model.ReferenceNumber] - @Model.ComplainType.GetDisplayName()</h2>
-        <a href="javascript:void(0);" class="btn btn-outline-light" onclick="history.back()">
-            <i class="fas fa-arrow-left me-2"></i> Back to List
-        </a>
+        <h2 class="mb-0 text-white">Complain #@Model.ReferenceNumber - @Model.ComplainType.GetDisplayName()</h2>
+        @if(Model.ComplainType == ComplainType.Refund)
+        {
+            <a asp-area="Admin" asp-controller="Complains" asp-action="RefundComplains" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back To List
+            </a>
+        }
+        else
+        {
+            <a asp-area="Admin" asp-controller="Complains" asp-action="LostOrFoundComplains" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back To List
+            </a>
+        }
     </div>
 </div>
+
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8">
@@ -92,9 +100,9 @@
                             }
                             else if (Model.IsLost)
                             {
-<button type="button" class="btn btn-outline-success d-flex align-items-center" id="scheduleDeliveryBtn" data-complain-id="@Model.ComplainId" data-bs-toggle="modal" data-bs-target="#scheduleDeliveryModal">
-    <i class="fas fa-box me-2"></i> Package Items
-</button>
+                                <button type="button" class="btn btn-outline-success d-flex align-items-center" id="scheduleDeliveryBtn" data-complain-id="@Model.ComplainId" data-bs-toggle="modal" data-bs-target="#scheduleDeliveryModal">
+                                    <i class="fas fa-box me-2"></i> Package Items
+                                </button>
                             }
                         }
                     </div>
@@ -228,6 +236,22 @@
                                 </dd>
                             }
                         }
+                        @* Description and comments *@
+                        @if (!string.IsNullOrWhiteSpace(Model.Description))
+                        {
+                            <dt class="col-sm-4">Description</dt>
+                            <dd class="col-sm-8">@Model.Description</dd>
+                        }
+                        @if (Model.Comments != null && Model.Comments.Any(c => !string.IsNullOrWhiteSpace(c)))
+                        {
+                            <dt class="col-sm-4">Comments</dt>
+                            <dd class="col-sm-8">
+                                @foreach (var comment in Model.Comments.Where(c => !string.IsNullOrWhiteSpace(c)))
+                                {
+                                    <textarea class="form-control mb-2 auto-expand-textarea" rows="1" readonly>@comment</textarea>
+                                }
+                            </dd>
+                        }
                     </dl>
                     <form asp-action="UpdateComments" method="post">
                         @Html.AntiForgeryToken()
@@ -304,7 +328,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="scheduleDeliveryModal" tabindex="-1" aria-labelledby="scheduleDeliveryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -321,7 +344,6 @@
         </div>
     </div>
 </div>
-
 <!-- Approve Modal -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -344,7 +366,6 @@
         </div>
     </div>
 </div>
-
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -367,7 +388,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -420,34 +440,34 @@
                 }
             });
         });
-
-$(document).on('submit', '#completePackagingForm', function (e) {
-    e.preventDefault();
-    var $form = $(this);
-    var token = $form.find('input[name="__RequestVerificationToken"]').val();
-    var complainId = $form.find('input[name="ComplainId"]').val();
-
-    $.ajax({
-        url: '@Url.Action("CompletePackaging", "Complains", new { area = "Admin" })',
-        type: 'POST',
-        data: {
-            __RequestVerificationToken: token,
-            complainId: complainId
-        },
-        success: function (response) {
-            if (response.packageId && response.barcodePath) {
-                alert('Packaging completed! Package ID: ' + response.packageId);
-                // Optionally refresh page or close modal here
-            } else {
-                alert('Failed to complete packaging.');
-            }
-        },
-        error: function () {
-            alert('Error occurred during complete packaging.');
-        }
-    });
-});
-
+        // Submit complete packaging form via AJAX
+        $(document).on('submit', '#completePackagingForm', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var token = $form.find('input[name="__RequestVerificationToken"]').val();
+            var complainId = $form.find('input[name="ComplainId"]').val();
+            $.ajax({
+                url: '@Url.Action("CompletePackaging", "Complains", new { area = "Admin" })',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: token,
+                    complainId: complainId
+                },
+                success: function (response) {
+                    if (response.packageId && response.barcodePath) {
+                        alert('Packaging completed! Package ID: ' + response.packageId);
+                        // Close the modal after successful packaging
+                        $('#scheduleDeliveryModal').modal('hide');
+                        // Optionally refresh the page or update UI here
+                    } else {
+                        alert('Failed to complete packaging.');
+                    }
+                },
+                error: function () {
+                    alert('Error occurred during complete packaging.');
+                }
+            });
+        });
     });
 </script>
 }

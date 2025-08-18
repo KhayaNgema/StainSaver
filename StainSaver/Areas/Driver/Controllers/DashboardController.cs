@@ -46,6 +46,18 @@ namespace StainSaver.Areas.Driver.Controllers
                             
             var totalAssigned = await _context.Bookings
                 .CountAsync(b => b.DriverId == driverId);
+
+            var totalItemDeliveries = await _context.Deliveries
+                .Where(it => it.DriverId == driverId &&
+                it.Status == DeliveryStatus.DriverAssigned ||
+                it.Status == DeliveryStatus.Delivering)
+                .CountAsync();
+
+            var totalPickUps = await _context.PickUps
+                .Where(tp => tp.DriverId == driverId &&
+                tp.Status == PickUpStatus.DriverAssigned ||
+                tp.Status == PickUpStatus.PickingUp)
+                .CountAsync();
             
             var model = new DriverDashboardViewModel
             {
@@ -53,7 +65,9 @@ namespace StainSaver.Areas.Driver.Controllers
                 PickupsToday = pickupsToday,
                 DeliveriesToday = deliveriesToday,
                 PendingDeliveries = pendingDeliveries,
-                TotalAssignedDeliveries = totalAssigned
+                TotalAssignedDeliveries = totalAssigned,
+                ItemDeliveries = totalItemDeliveries,
+                ItemsPickUps = totalPickUps
             };
             
             return View(model);

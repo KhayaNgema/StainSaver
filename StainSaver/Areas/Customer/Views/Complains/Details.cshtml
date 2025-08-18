@@ -5,9 +5,7 @@
     ViewData["Title"] = $"Complain Details - #{Model.ComplainId}";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var zaCulture = new CultureInfo("en-ZA");
-
     string NormalizePath(string path) => string.IsNullOrWhiteSpace(path) ? path : path.Replace("\\", "/");
-
     string GetStatusBadgeColor(ComplainStatus status) => status switch
     {
         ComplainStatus.Review => "secondary",
@@ -34,28 +32,18 @@
         transition: transform 0.3s ease;
     }
     #commentsContainer {
-        display: none;
         margin-top: 1rem;
     }
-    .edit-icon-btn {
-        cursor: pointer;
-        color: #0d6efd;
-        font-size: 1.25rem;
-        border: none;
-        background: none;
-    }
-    textarea[readonly].auto-expand-textarea {
+    textarea.auto-expand-textarea {
         background-color: white !important;
         resize: none;
         overflow: hidden;
         min-height: 1.5em;
         line-height: 1.5em;
-    }
-    #actionButtonsContainer {
-        margin-top: 1rem;
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-start;
+        width: 100%;
+        border: none;
+        padding: 0.375rem 0.75rem;
+        margin-bottom: 0.5rem;
     }
 </style>
 <div class="container-fluid">
@@ -72,49 +60,48 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Complain Information</h5>
-
-                        @if(User.IsInRole("Admin"))
+                    <div class="d-flex justify-content-end align-items-center gap-2">
+                        @if (User.IsInRole("Admin"))
                         {
- <div class="d-flex justify-content-end align-items-center gap-2">
-                        <button type="button" class="edit-icon-btn" id="toggleCommentsBtn" title="Edit Comments" aria-label="Edit Comments" style="font-size:40px; color:darkgrey;">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        @if (Model.ComplainType == ComplainType.Refund && Model.Status == ComplainStatus.Approved)
-                        {
-                            <a asp-controller="Complains" asp-action="ProcessRefund" asp-route-complainId="@Model.ComplainId" class="btn btn-outline-success d-flex align-items-center">
-                                <i class="fas fa-money-bill-wave me-2"></i> Process Refund
-                            </a>
-                        }
-                        else if (Model.ComplainType == ComplainType.Lost_and_found && Model.Status == ComplainStatus.Approved)
-                        {
-                            if (Model.IsFound)
+                            <button type="button" class="edit-icon-btn" id="toggleCommentsBtn" title="Edit Comments" aria-label="Edit Comments" style="font-size:40px; color:darkgrey;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            @if (Model.ComplainType == ComplainType.Refund && Model.Status == ComplainStatus.Approved)
                             {
-                                <a asp-controller="Complains" asp-action="SchedulePickUp" asp-route-id="@Model.ComplainId" class="btn btn-outline-success d-flex align-items-center">
-                                    <i class="fas fa-clock me-2"></i> Schedule pick-up
+                                <a asp-controller="Complains" asp-action="ProcessRefund" asp-route-complainId="@Model.ComplainId" class="btn btn-outline-success d-flex align-items-center">
+                                    <i class="fas fa-money-bill-wave me-2"></i> Process Refund
                                 </a>
                             }
-                            else if (Model.IsLost)
+                            else if (Model.ComplainType == ComplainType.Lost_and_found && Model.Status == ComplainStatus.Approved)
                             {
-<button type="button" class="btn btn-outline-success d-flex align-items-center" id="scheduleDeliveryBtn" data-complain-id="@Model.ComplainId" data-bs-toggle="modal" data-bs-target="#scheduleDeliveryModal">
-    <i class="fas fa-box me-2"></i> Package Items
-</button>
+                                if (Model.IsFound)
+                                {
+                                    <a asp-controller="Complains" asp-action="SchedulePickUp" asp-route-id="@Model.ComplainId" class="btn btn-outline-success d-flex align-items-center">
+                                        <i class="fas fa-clock me-2"></i> Schedule pick-up
+                                    </a>
+                                }
+                                else if (Model.IsLost)
+                                {
+                                    <button type="button" class="btn btn-outline-success d-flex align-items-center" id="scheduleDeliveryBtn" data-complain-id="@Model.ComplainId" data-bs-toggle="modal" data-bs-target="#scheduleDeliveryModal">
+                                        <i class="fas fa-box me-2"></i> Package Items
+                                    </button>
+                                }
                             }
                         }
                     </div>
-                        }
                 </div>
                 <div class="card-body">
                     <dl class="row">
-
-                        @if(User.IsInRole("Admin"))
+                        @if (User.IsInRole("Admin"))
                         {
-                        <dt class="col-sm-4">Customer</dt>
-                        <dd class="col-sm-8">@Model.Customer?.FullName<br /><small class="text-muted">@Model.Customer?.Email</small></dd>
+                            <dt class="col-sm-4">Customer</dt>
+                            <dd class="col-sm-8">@Model.Customer?.FullName<br /><small class="text-muted">@Model.Customer?.Email</small></dd>
                         }
                         <dt class="col-sm-4">Complain Type</dt>
                         <dd class="col-sm-8">@Model.ComplainType.GetDisplayName()</dd>
                         <dt class="col-sm-4">Status</dt>
                         <dd class="col-sm-8"><span class="badge bg-@GetStatusBadgeColor(Model.Status)">@Model.Status.GetDisplayName()</span></dd>
+
                         @if (Model.ComplainType == ComplainType.Refund)
                         {
                             if (Model.Bank.HasValue)
@@ -171,8 +158,7 @@
                                 var proofPaymentModalId = $"modalProofPayment_{Model.ComplainId}";
                                 <dt class="col-sm-4">Proof of Payment</dt>
                                 <dd class="col-sm-8">
-                                    <img src="@proofPaymentUrl" alt="Proof of Payment" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;"
-                                         data-bs-toggle="modal" data-bs-target="#@proofPaymentModalId" />
+                                    <img src="@proofPaymentUrl" alt="Proof of Payment" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#@proofPaymentModalId" />
                                     <div class="modal fade" id="@proofPaymentModalId" tabindex="-1" aria-labelledby="@($"{proofPaymentModalId}_Label")" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered modal-sm">
                                             <div class="modal-content">
@@ -213,8 +199,7 @@
                                                 @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                                                 {
                                                     var imgPath = NormalizePath(item.ImageUrl);
-                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Lost or Found Item Image" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;"
-                                                         data-bs-toggle="modal" data-bs-target="#lostFoundItemModal_@item.LostOrFoundItemId" />
+                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Lost or Found Item Image" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#lostFoundItemModal_@item.LostOrFoundItemId" />
                                                     <div class="modal fade" id="lostFoundItemModal_@item.LostOrFoundItemId" tabindex="-1" aria-labelledby="lostFoundItemModalLabel_@item.LostOrFoundItemId" aria-hidden="true">
                                                         <div class="modal-dialog modal-dialog-centered modal-sm">
                                                             <div class="modal-content">
@@ -223,8 +208,7 @@
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <div class="modal-body text-center">
-                                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Lost or Found Item Image" class="img-fluid zoomable-image"
-                                                                         onclick="this.classList.toggle('zoomed')" />
+                                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Lost or Found Item Image" class="img-fluid zoomable-image" onclick="this.classList.toggle('zoomed')" />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -236,87 +220,82 @@
                                 </dd>
                             }
                         }
+                        @* Display Description *@
+                        @if (!string.IsNullOrWhiteSpace(Model.Description))
+                        {
+                            <dt class="col-sm-4">Description</dt>
+                            <dd class="col-sm-8">@Model.Description</dd>
+                        }
+                        @* Display Comments *@
+                        @if (Model.Comments != null && Model.Comments.Any(c => !string.IsNullOrWhiteSpace(c)))
+                        {
+                            <dt class="col-sm-4">Comments</dt>
+                            <dd class="col-sm-8">
+                                @foreach (var comment in Model.Comments.Where(c => !string.IsNullOrWhiteSpace(c)))
+                                {
+                                    <textarea class="form-control mb-2 auto-expand-textarea" rows="2" readonly>@comment</textarea>
+                                }
+                            </dd>
+                        }
                     </dl>
-                    <form asp-action="UpdateComments" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="complainId" value="@Model.ComplainId" />
-                        <div id="commentsContainer">
-                            <label for="commentsTextarea" class="form-label">Add / Edit Comment</label>
-                            <textarea id="commentsTextarea" name="comments" class="form-control" rows="5" placeholder="Add or edit comments..."></textarea>
-                            <div class="d-flex justify-content-end mt-2">
-                                <button type="submit" class="btn btn-success">Submit Comments</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    @if(User.IsInRole("Admin"))
-                    {
-                    @if (Model.Status == ComplainStatus.Review)
-                    {
-                        <div id="actionButtonsContainer">
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</button>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">Reject</button>
-                        </div>
-                    }
-                    }
                 </div>
             </div>
         </div>
 
-        @if(User.IsInRole("Admin"))
+        @if (User.IsInRole("Admin"))
         {
-<div class="col-md-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Customer Information</h5>
-                </div>
-                <div class="card-body">
-                    @if (!string.IsNullOrEmpty(Model.Customer?.FullName))
-                    {
-                        <div class="mb-3">
-                            <h6 class="text-muted mb-1">Name</h6>
-                            <p>@Model.Customer.FullName</p>
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.Customer?.Email))
-                    {
-                        <div class="mb-3 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Email</h6>
-                                <p class="mb-0">@Model.Customer.Email</p>
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Customer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(Model.Customer?.FullName))
+                        {
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-1">Name</h6>
+                                <p>@Model.Customer.FullName</p>
                             </div>
-                            <a href="mailto:@Model.Customer.Email" class="btn btn-outline-primary btn-sm ms-3" title="Email">
-                                <i class="fas fa-envelope"></i>
-                            </a>
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.Customer?.PhoneNumber))
-                    {
-                        <div class="mb-3 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Phone</h6>
-                                <p class="mb-0">@Model.Customer.PhoneNumber</p>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer?.Email))
+                        {
+                            <div class="mb-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Email</h6>
+                                    <p class="mb-0">@Model.Customer.Email</p>
+                                </div>
+                                <a href="mailto:@Model.Customer.Email" class="btn btn-outline-primary btn-sm ms-3" title="Email">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
                             </div>
-                            <a href="tel:@Model.Customer.PhoneNumber" class="btn btn-outline-primary btn-sm ms-3" title="Call">
-                                <i class="fas fa-phone"></i>
-                            </a>
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.Customer?.Address))
-                    {
-                        <div class="mb-3 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Address</h6>
-                                <p class="mb-0">@Model.Customer.Address</p>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer?.PhoneNumber))
+                        {
+                            <div class="mb-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Phone</h6>
+                                    <p class="mb-0">@Model.Customer.PhoneNumber</p>
+                                </div>
+                                <a href="tel:@Model.Customer.PhoneNumber" class="btn btn-outline-primary btn-sm ms-3" title="Call">
+                                    <i class="fas fa-phone"></i>
+                                </a>
                             </div>
-                            <a href="#" class="btn btn-outline-primary btn-sm ms-3" title="Location">
-                                <i class="fas fa-location"></i>
-                            </a>
-                        </div>
-                    }
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer?.Address))
+                        {
+                            <div class="mb-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Address</h6>
+                                    <p class="mb-0">@Model.Customer.Address</p>
+                                </div>
+                                <a href="#" class="btn btn-outline-primary btn-sm ms-3" title="Location">
+                                    <i class="fas fa-location"></i>
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
         }
     </div>
 </div>
@@ -337,53 +316,6 @@
         </div>
     </div>
 </div>
-
-<!-- Approve Modal -->
-<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form asp-action="ApproveComplain" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="complainId" value="@Model.ComplainId" />
-                <div class="modal-header">
-                    <h5 class="modal-title" id="approveModalLabel">Confirm Approve</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to <strong>approve</strong> this complain?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Confirm Approve</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Reject Modal -->
-<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form asp-action="RejectComplain" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="complainId" value="@Model.ComplainId" />
-                <div class="modal-header">
-                    <h5 class="modal-title" id="rejectModalLabel">Confirm Reject</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to <strong>reject</strong> this complain?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Confirm Reject</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -436,35 +368,7 @@
                 }
             });
         });
-
-$(document).on('submit', '#completePackagingForm', function (e) {
-    e.preventDefault();
-    var $form = $(this);
-    var token = $form.find('input[name="__RequestVerificationToken"]').val();
-    var complainId = $form.find('input[name="ComplainId"]').val();
-
-    $.ajax({
-        url: '@Url.Action("CompletePackaging", "Complains", new { area = "Admin" })',
-        type: 'POST',
-        data: {
-            __RequestVerificationToken: token,
-            complainId: complainId
-        },
-        success: function (response) {
-            if (response.packageId && response.barcodePath) {
-                alert('Packaging completed! Package ID: ' + response.packageId);
-                // Optionally refresh page or close modal here
-            } else {
-                alert('Failed to complete packaging.');
-            }
-        },
-        error: function () {
-            alert('Error occurred during complete packaging.');
-        }
-    });
-});
-
+        // No comment update form, just display comments
     });
 </script>
 }
-
