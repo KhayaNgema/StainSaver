@@ -84,19 +84,30 @@ namespace StainSaver.Areas.Admin.Controllers
         public async Task<IActionResult> RefundComplains()
         {
             var complains = await _context.Complains
-                .Where(c => c.ComplainType == ComplainType.Refund)
-                .Include(c => c.Customer)
-                .Include(c => c.RefundItems)
-                .ToListAsync();
+                                 .Where(c => c.ComplainType == ComplainType.Refund &&
+                                    (c.Status == ComplainStatus.AwaitingCustomer ||
+                                     c.Status == ComplainStatus.DriverAssigned ||
+                                     c.Status == ComplainStatus.Approved ||
+                                     c.Status == ComplainStatus.Review))
+                                 .Include(c => c.Customer)
+                                 .Include(c => c.Booking)
+                                 .ToListAsync();
+
             return View(complains);
         }
+
         [HttpGet]
         public async Task<IActionResult> LostOrFoundComplains()
         {
             var complains = await _context.Complains
-                .Where(c => c.ComplainType == ComplainType.Lost_and_found)
-                .Include(c => c.Customer)
-                .ToListAsync();
+                                 .Where(c => c.ComplainType == ComplainType.Lost_and_found &&
+                                    (c.Status == ComplainStatus.AwaitingCustomer ||
+                                     c.Status == ComplainStatus.DriverAssigned ||
+                                     c.Status == ComplainStatus.Approved ||
+                                     c.Status == ComplainStatus.Review))
+                                  .Include(c => c.Customer)
+                                  .Include(c => c.Booking)
+                                 .ToListAsync();
             return View(complains);
         }
         [HttpGet]
@@ -431,6 +442,7 @@ namespace StainSaver.Areas.Admin.Controllers
                 IsPackaged = true,
                 LostOrFoundItemId = deliveryItemId,
                 IsCollected = false,
+                IsMissing = false,
                 ComplainId = lostOrFoundItem.Complain.ComplainId
             };
 

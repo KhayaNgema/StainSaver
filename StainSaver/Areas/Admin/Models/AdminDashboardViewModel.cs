@@ -6,6 +6,10 @@ namespace StainSaver.Areas.Admin.Models
     public class AdminDashboardViewModel
     {
         public int TotalCustomers { get; set; }
+
+        public int TotalRefundComplains { get; set; }
+        public int TotalLostOrFoundComplains { get; set; }
+
         public int TotalStaff { get; set; }
         public int TotalDrivers { get; set; }
         public int TotalBookings { get; set; }

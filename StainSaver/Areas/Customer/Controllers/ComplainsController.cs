@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using StainSaver.Areas.Customer.Models;
 using StainSaver.Data;
 using StainSaver.Models;
@@ -23,6 +24,15 @@ namespace StainSaver.Areas.Customer.Controllers
             _context = context;
             _userManager = userManager;
         }
+
+
+        [HttpGet]
+        public IActionResult SuccessfullyCollectedItems()
+        {
+            return View();
+        }
+
+
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -58,6 +68,35 @@ namespace StainSaver.Areas.Customer.Controllers
             return View(complain);
         }
 
+       
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CollectDelivery(int packageId)
+        {
+            var package = await _context.Packages
+                .Where(p => p.PackageId == packageId)
+                .Include(p => p.Complain)
+                .Include(p => p.Complain)
+                .FirstOrDefaultAsync();
+
+            var complain = package.Complain;
+
+            var delivery = await _context.Deliveries
+                .Where(p => p.ComplainId == complain.ComplainId)
+                .FirstOrDefaultAsync();
+
+            complain.Status = ComplainStatus.Completed;
+            delivery.Status = DeliveryStatus.Delivered;
+
+            _context.Update(complain);
+            _context.Update(delivery);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(SuccessfullyCollectedItems));
+        }
 
         [HttpGet]
         [Authorize]
@@ -109,6 +148,38 @@ namespace StainSaver.Areas.Customer.Controllers
 
             return View(viewModel);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ItemFound(int itemId)
+        {
+            var item = await _context.DeliveryItems
+                .Where(i => i.DeliveryItemId == itemId)
+                .FirstOrDefaultAsync();
+
+            item.IsCollected = true;
+
+            _context.Update(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true});
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ItemMissing(int itemId)
+        {
+            var item = await _context.DeliveryItems
+                .Where(i => i.DeliveryItemId == itemId)
+                .FirstOrDefaultAsync();
+
+            item.IsMissing = true;
+
+            _context.Update(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        
 
         [HttpPost]
         [Authorize]

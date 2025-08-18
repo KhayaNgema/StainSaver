@@ -43,6 +43,23 @@ namespace StainSaver.Areas.Admin.Controllers
                 try
                 {
                     // These operations may fail if tables don't exist
+                    model.TotalRefundComplains = await _context.Complains
+                        .Where(c => c.ComplainType == ComplainType.Refund &&
+                                    (c.Status == ComplainStatus.AwaitingCustomer ||
+                                     c.Status == ComplainStatus.DriverAssigned ||
+                                     c.Status == ComplainStatus.Approved ||
+                                     c.Status == ComplainStatus.Review))
+                        .CountAsync();
+
+                    model.TotalLostOrFoundComplains = await _context.Complains
+                        .Where(c => c.ComplainType == ComplainType.Lost_and_found &&
+                                    (c.Status == ComplainStatus.AwaitingCustomer ||
+                                     c.Status == ComplainStatus.DriverAssigned ||
+                                     c.Status == ComplainStatus.Approved ||
+                                     c.Status == ComplainStatus.Review))
+                        .CountAsync();
+
+
                     model.TotalBookings = await _context.Bookings.CountAsync();
                     model.PendingBookings = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Pending);
                     model.CompletedBookings = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Completed);

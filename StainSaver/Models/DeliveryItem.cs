@@ -20,6 +20,8 @@ namespace StainSaver.Models
 
         public bool IsCollected { get; set; } = false;
 
+        public bool IsMissing { get; set; }
+
         public DateTime? PackagedAt { get; set; }
 
         public DateTime? CollectionAt { get; set; }
