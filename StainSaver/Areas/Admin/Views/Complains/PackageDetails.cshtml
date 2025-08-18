@@ -1,0 +1,262 @@
+﻿@model StainSaver.Models.Package
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Package Details - #{Model.PackageId}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var zaCulture = new CultureInfo("en-ZA");
+    string NormalizePath(string path) => string.IsNullOrWhiteSpace(path) ? path : path.Replace("\\", "/");
+
+    string GetStatusBadgeColor(ComplainStatus status) => status switch
+    {
+        ComplainStatus.Review => "secondary",
+        ComplainStatus.Approved => "success",
+        ComplainStatus.Rejected => "danger",
+        ComplainStatus.DriverAssigned => "info",
+        ComplainStatus.Returned => "warning",
+        ComplainStatus.Collected => "primary",
+        ComplainStatus.Refunded => "success",
+        _ => "secondary",
+    };
+
+    string ConvertBarcodeToBase64(byte[] imageBytes)
+    {
+        if (imageBytes == null || imageBytes.Length == 0)
+            return null;
+        var base64 = Convert.ToBase64String(imageBytes);
+        return $"data:image/png;base64,{base64}";
+    }
+
+    string barcodeImageSrc = ConvertBarcodeToBase64(Model.BarcodeImage);
+    var complain = Model.Complain; // Related complain
+}
+
+<style>
+    /* Your provided style block here unchanged */
+    .zoomable-image {
+        cursor: zoom-in;
+        transition: transform 0.3s ease;
+        max-height: 85vh;
+        max-width: 100%;
+        user-select: none;
+    }
+    .zoomed {
+        cursor: zoom-out;
+        transform: scale(2);
+        transition: transform 0.3s ease;
+    }
+    #commentsContainer {
+        display: none;
+        margin-top: 1rem;
+    }
+    .edit-icon-btn {
+        cursor: pointer;
+        color: #0d6efd;
+        font-size: 1.25rem;
+        border: none;
+        background: none;
+    }
+    textarea[readonly].auto-expand-textarea {
+        background-color: white !important;
+        resize: none;
+        overflow: hidden;
+        min-height: 1.5em;
+        line-height: 1.5em;
+    }
+    #actionButtonsContainer {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-start;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <h2 class="mb-0 text-white">Complain [#@complain?.ReferenceNumber] - @complain?.ComplainType.GetDisplayName()</h2>
+        <a href="javascript:void(0);" class="btn btn-outline-light" onclick="history.back()">
+            <i class="fas fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Package Information</h5>
+                    <div class="d-flex justify-content-end align-items-center gap-2">
+                        @* You can place package-related action buttons here if needed *@
+                    </div>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Reference Number</dt>
+                        <dd class="col-sm-8">@Model.ReferenceNumber</dd>
+                        <dt class="col-sm-4">Created At</dt>
+                        <dd class="col-sm-8">@Model.CreatedAt.ToString("g")</dd>
+                        <dt class="col-sm-4">Created By</dt>
+                        <dd class="col-sm-8">@Model.Admin?.UserName</dd>
+                        <dt class="col-sm-4">Driver</dt>
+<dd class="col-sm-8">
+    @(Model.Driver != null ? Model.Driver.UserName : "Not Assigned")
+</dd>
+
+                        <dt class="col-sm-4">Barcode</dt>
+                        <dd class="col-sm-8">
+                            @if (!string.IsNullOrEmpty(barcodeImageSrc))
+                            {
+                                <img src="@barcodeImageSrc" alt="Barcode Image" style="max-width: 300px; max-height: 100px;" />
+                            }
+                            else
+                            {
+                                <span>No barcode image available.</span>
+                            }
+                        </dd>
+                    </dl>
+
+                    @if (complain != null)
+                    {
+                        <hr />
+                        <h5>Complain Information</h5>
+                        <dl class="row">
+                            <dt class="col-sm-4">Customer</dt>
+                            <dd class="col-sm-8">@complain.Customer?.FullName<br /><small class="text-muted">@complain.Customer?.Email</small></dd>
+                            <dt class="col-sm-4">Complain Type</dt>
+                            <dd class="col-sm-8">@complain.ComplainType.GetDisplayName()</dd>
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8"><span class="badge bg-@GetStatusBadgeColor(complain.Status)">@complain.Status.GetDisplayName()</span></dd>
+
+                            @* Lost and Found items *@
+                            @if (complain.ComplainType == ComplainType.Lost_and_found && complain.LostOrFoundItems != null && complain.LostOrFoundItems.Any())
+                            {
+                                <dt class="col-sm-4">Lost or Found Items</dt>
+                                <dd class="col-sm-8">
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var item in complain.LostOrFoundItems)
+                                        {
+                                            <li class="mb-3">
+                                                <strong>@item.ItemDescription</strong><br />
+                                                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                                {
+                                                    var imgPath = NormalizePath(item.ImageUrl);
+                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Lost or Found Item Image" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;" />
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </dd>
+                            }
+
+                            @* Refund items *@
+                            @if (complain.ComplainType == ComplainType.Refund && complain.RefundItems != null && complain.RefundItems.Any())
+                            {
+                                <dt class="col-sm-4">Refund Items</dt>
+                                <dd class="col-sm-8">
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var item in complain.RefundItems)
+                                        {
+                                            <li class="mb-3">
+                                                <strong>@item.RefundItemName</strong><br />
+                                                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                                {
+                                                    var imgPath = NormalizePath(item.ImageUrl);
+                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Refund Item Image" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;" />
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(complain?.Customer?.FullName))
+                    {
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Name</h6>
+                            <p>@complain.Customer.FullName</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(complain?.Customer?.Email))
+                    {
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Email</h6>
+                                <p class="mb-0">@complain.Customer.Email</p>
+                            </div>
+                            <a href="mailto:@complain.Customer.Email" class="btn btn-outline-primary btn-sm ms-3" title="Email">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(complain?.Customer?.PhoneNumber))
+                    {
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Phone</h6>
+                                <p class="mb-0">@complain.Customer.PhoneNumber</p>
+                            </div>
+                            <a href="tel:@complain.Customer.PhoneNumber" class="btn btn-outline-primary btn-sm ms-3" title="Call">
+                                <i class="fas fa-phone"></i>
+                            </a>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(complain?.Customer?.Address))
+                    {
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Address</h6>
+                                <p class="mb-0">@complain.Customer.Address</p>
+                            </div>
+                            <a href="#" class="btn btn-outline-primary btn-sm ms-3" title="Location">
+                                <i class="fas fa-location"></i>
+                            </a>
+                        </div>
+                    }
+<div class="d-grid mt-3">
+    <a asp-area="Admin" asp-controller="Complains" asp-action="ScheduleDelivery" asp-route-packageId="@Model.PackageId" class="btn btn-outline-success btn-block">
+        Schedule Delivery
+    </a>
+</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var toggleBtn = $("#toggleCommentsBtn");
+            var commentsContainer = $("#commentsContainer");
+            commentsContainer.hide();
+            toggleBtn.click(function () {
+                commentsContainer.toggle();
+            });
+
+            function autoExpandTextarea(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+            $('textarea.auto-expand-textarea').each(function () {
+                autoExpandTextarea(this);
+            });
+        });
+    </script>
+}

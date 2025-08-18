@@ -1,0 +1,131 @@
+@model StainSaver.Models.BookingDetail
+@{
+    ViewData["Title"] = "Order Details";
+    var zaCulture = new System.Globalization.CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <p>Detailed information about this laundry task.</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2>Service Information</h2>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8">@Model.Id</dd>
+                        
+                        <dt class="col-sm-4">Service:</dt>
+                        <dd class="col-sm-8">@Model.LaundryService.Name</dd>
+                        
+                        <dt class="col-sm-4">Description:</dt>
+                        <dd class="col-sm-8">@Model.LaundryService.Description</dd>
+                        
+                        <dt class="col-sm-4">Quantity:</dt>
+                        <dd class="col-sm-8">@Model.Quantity</dd>
+                        
+                        <dt class="col-sm-4">Price:</dt>
+                        <dd class="col-sm-8">@Model.Price.ToString("C", zaCulture)</dd>
+                        
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.Status == "Assigned")
+                            {
+                                <span class="badge bg-info">@Model.Status</span>
+                            }
+                            else if (Model.Status == "Processing")
+                            {
+                                <span class="badge bg-success">@Model.Status</span>
+                            }
+                            else if (Model.Status == "Completed")
+                            {
+                                <span class="badge bg-warning text-dark">@Model.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@Model.Status</span>
+                            }
+                        </dd>
+                        
+                        @if (Model.CompletedOn.HasValue)
+                        {
+                            <dt class="col-sm-4">Completed On:</dt>
+                            <dd class="col-sm-8">@Model.CompletedOn.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h2>Booking Information</h2>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Booking ID:</dt>
+                        <dd class="col-sm-8">@Model.BookingId</dd>
+                        
+                        <dt class="col-sm-4">Customer:</dt>
+                        <dd class="col-sm-8">@Model.Booking.Customer.FullName</dd>
+                        
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">@Model.Booking.Customer.Email</dd>
+                        
+                        <dt class="col-sm-4">Phone:</dt>
+                        <dd class="col-sm-8">@Model.Booking.Customer.PhoneNumber</dd>
+                        
+                        <dt class="col-sm-4">Pickup Date:</dt>
+                        <dd class="col-sm-8">@(Model.Booking.PickupDate.HasValue ? Model.Booking.PickupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Not scheduled")</dd>
+                        
+                        <dt class="col-sm-4">Booking Status:</dt>
+                        <dd class="col-sm-8">@Model.Booking.Status</dd>
+                        
+                        <dt class="col-sm-4">Address:</dt>
+                        <dd class="col-sm-8">
+                            @Model.Booking.Customer.StreetAddress, 
+                            @Model.Booking.Customer.Suburb, 
+                            @Model.Booking.Customer.City, 
+                            @Model.Booking.Customer.Province, 
+                            @Model.Booking.Customer.PostalCode
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <div class="btn-group">
+            @if (Model.Status == "Assigned")
+            {
+                <a asp-action="StartProcessing" asp-route-id="@Model.Id" class="btn btn-success">
+                    <i class="fas fa-play me-1"></i>Start Processing
+                </a>
+            }
+            else if (Model.Status == "Processing")
+            {
+                <a asp-action="MarkComplete" asp-route-id="@Model.Id" class="btn btn-primary">
+                    <i class="fas fa-check me-1"></i>Mark Complete
+                </a>
+            }
+            
+            @if (Model.Status == "Assigned" || Model.Status == "Processing")
+            {
+                <a asp-action="CancelTask" asp-route-id="@Model.Id" class="btn btn-danger" 
+                   onclick="return confirm('Are you sure you want to remove this task from your queue?');">
+                    <i class="fas fa-times me-1"></i>Remove Task
+                </a>
+            }
+            
+            <a asp-action="Assigned" class="btn btn-secondary mx-1">
+                <i class="fas fa-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,79 @@
+@model IEnumerable<StainSaver.Models.BookingDetail>
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Staff Assignment";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Staff Assignment</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Bookings
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Booking Items Awaiting Staff Assignment</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Service</th>
+                                <th>Booking #</th>
+                                <th>Customer</th>
+                                <th>Pickup Date</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>
+                                        <div>@item.LaundryService.Name</div>
+                                        <small class="text-muted">@item.LaundryService.Description</small>
+                                    </td>
+                                    <td><a asp-action="Details" asp-route-id="@item.BookingId">@item.BookingId</a></td>
+                                    <td>
+                                        <div>@item.Booking.Customer.FullName</div>
+                                        <small class="text-muted">@item.Booking.Customer.Email</small>
+                                    </td>
+                                    <td>@(item.Booking.PickupDate.HasValue ? item.Booking.PickupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Not scheduled")</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.Price.ToString("C", zaCulture)</td>
+                                    <td>
+                                        <a asp-action="AssignStaff" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-user-tie me-1"></i>Assign Staff
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-4 text-center">
+                    <i class="fas fa-info-circle text-info mb-3" style="font-size: 3rem;"></i>
+                    <h5>No Items Awaiting Staff Assignment</h5>
+                    <p class="text-muted">All booking items have already been assigned to staff members or there are no bookings in the appropriate status.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

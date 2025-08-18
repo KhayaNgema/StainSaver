@@ -1,0 +1,134 @@
+@model StainSaver.Areas.Driver.Models.DriverDashboardViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <h1>@Model.Title</h1>
+    <p>Welcome to the driver portal of StainSaver.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.PickupsToday</h2>
+                    <p class="card-text">Pickups Today</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Deliveries" asp-action="Pickups">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.DeliveriesToday</h2>
+                    <p class="card-text">Deliveries Today</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Deliveries" asp-action="TodayDeliveries">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.PendingDeliveries</h2>
+                    <p class="card-text">Pending Deliveries</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Deliveries" asp-action="Pending">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.TotalAssignedDeliveries</h2>
+                    <p class="card-text">Total Assigned</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Deliveries" asp-action="All">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card text-white mb-4" style="background-color:navy">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.PickupsToday</h2>
+                    <p class="card-text">Lost/Found Items Pick-Ups</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Complains" asp-action="PickUps">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white mb-4" style="background-color:mediumpurple;">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.DeliveriesToday</h2>
+                    <p class="card-text">Lost/Found Items Deliveries</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Driver" asp-controller="Complains" asp-action="Deliveries">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-route me-1"></i>
+                    Today's Route
+                </div>
+                <div class="card-body">
+                    <p>This section would display optimized routes for the day.</p>
+                    <a asp-area="Driver" asp-controller="Routes" asp-action="Today" class="btn btn-primary">View Route Map</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-list me-1"></i>
+                    My Tasks
+                </div>
+                <div class="card-body">
+                    <p>This section would display your assigned tasks.</p>
+                    <a asp-area="Driver" asp-controller="Tasks" asp-action="Index" class="btn btn-primary">
+                        <i class="fas fa-list-check me-2"></i>View My Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bell me-1"></i>
+                    Notifications
+                </div>
+                <div class="card-body">
+                    <p>This section would display driver notifications.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Additional scripts for the driver dashboard can be added here -->
+} 

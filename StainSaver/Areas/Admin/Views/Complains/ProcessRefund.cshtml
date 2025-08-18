@@ -1,0 +1,272 @@
+﻿@model StainSaver.Areas.Admin.Models.ProcessRefundViewModel
+@using StainSaver.Models
+@using System.Globalization
+@{
+    string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return path;
+        return path.Replace("\\", "/");
+    }
+}
+@{
+    ViewData["Title"] = "Process Refund";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var complain = (Complain)ViewData["Complain"];
+    var booking = (Booking)ViewData["Booking"];
+    var customerName = complain.Customer?.FullName;
+    var zaCulture = new CultureInfo("en-ZA");
+    decimal baseRefund = booking?.TotalAmount ?? 0m;
+    decimal GetTotalDeductionPercentage()
+    {
+        decimal totalPercent = 0m;
+        if (Model.RefundPolicies != null)
+        {
+            foreach (var policy in Model.RefundPolicies)
+            {
+                if (RefundPolicyData.RefundPolicyPercentages.TryGetValue(policy, out var pct))
+                {
+                    totalPercent += pct;
+                }
+            }
+        }
+        return totalPercent > 1 ? 1 : totalPercent;
+    }
+    decimal policyDeductionAmount = baseRefund * GetTotalDeductionPercentage();
+    decimal couponBonus = Model.CouponBonus;
+    decimal calculatedRefundAmount = baseRefund - policyDeductionAmount - couponBonus;
+    if (calculatedRefundAmount < 0) calculatedRefundAmount = 0;
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <h2 class="mb-0 text-white">Process Refund for Complain #@complain.ReferenceNumber</h2>
+        <a href="javascript:void(0);" class="btn btn-outline-light" onclick="history.back()">
+            <i class="fas fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+<div class="container">
+    <form asp-action="ProcessRefund" method="post" class="mb-5">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ComplainId" />
+        <div class="row">
+            <!-- LEFT COLUMN -->
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Refund Request</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Customer Name</dt>
+                            <dd class="col-sm-8">@customerName</dd>
+                            <dt class="col-sm-4">Order ID</dt>
+                            <dd class="col-sm-8">@booking?.Id</dd>
+                            <dt class="col-sm-4">Service Type</dt>
+                            <dd class="col-sm-8">
+                                @if (booking?.BookingDetails != null && booking.BookingDetails.Any())
+                                {
+                                    <ul class="mb-0 ps-3">
+                                        @foreach (var item in booking.BookingDetails)
+                                        {
+                                            <li>@item.LaundryService?.Name</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span>N/A</span>
+                                }
+                            </dd>
+                            <dt class="col-sm-4">Total Paid</dt>
+                            <dd class="col-sm-8">@booking?.TotalAmount.ToString("C", zaCulture)</dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Refund Items</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.RefundItems != null && Model.RefundItems.Any())
+                        {
+                            <ul>
+                                @foreach (var item in Model.RefundItems)
+                                {
+                                    <li class="mb-3">
+                                        <strong>@item.RefundItemName</strong><br />
+                                        @if (!string.IsNullOrWhiteSpace(item.ImageFile))
+                                        {
+                                            var imgPath = NormalizePath(item.ImageFile);
+                                            <img src="@Url.Content($"~/{imgPath}")"
+                                                 alt="@item.RefundItemName"
+                                                 style="max-height:150px; max-width:150px; cursor:pointer;"
+                                                 class="img-thumbnail"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#modalRefundItem_@item.RefundItemName.Replace(" ", "")" />
+
+                                            <div class="modal fade" id="modalRefundItem_@item.RefundItemName.Replace(" ", "")" tabindex="-1" aria-labelledby="modalRefundItemLabel_@item.RefundItemName.Replace(" ", "")" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="modalRefundItemLabel_@item.RefundItemName.Replace(" ", "")">@item.RefundItemName</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body text-center">
+                                                            <img src="@Url.Content($"~/{imgPath}")" alt="@item.RefundItemName" class="img-fluid zoomable-image" onclick="this.classList.toggle('zoomed')" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <span>No refund items available</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <!-- RIGHT COLUMN -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Refund Policy</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var policy in new[] { RefundPolicy.LateClaimDeduction, RefundPolicy.PolicyDeduction })
+                        {
+                            var percent = RefundPolicyData.RefundPolicyPercentages.ContainsKey(policy)
+                                ? RefundPolicyData.RefundPolicyPercentages[policy] * 100
+                                : 0;
+                            <div class="form-check mb-2">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       value="@policy"
+                                       name="RefundPolicies"
+                                       id="policy-@policy"
+                                       @(Model.RefundPolicies != null && Model.RefundPolicies.Contains(policy) ? "checked" : "") />
+                                <label class="form-check-label" for="policy-@policy">
+                                    @policy.GetDisplayName() (@percent.ToString("F0")%)
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Refund Amount</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-6">Base Refund</dt>
+                            <dd class="col-sm-6">@baseRefund.ToString("C", zaCulture)</dd>
+                            <dt class="col-sm-6">Policy Deduction</dt>
+                            <dd class="col-sm-6">-@policyDeductionAmount.ToString("C", zaCulture)</dd>
+                            <dt class="col-sm-6">Coupon / Bonus</dt>
+                            <dd class="col-sm-6">
+                                <input type="number" step="0.01" min="0" class="form-control" asp-for="CouponBonus" id="couponBonus" />
+                            </dd>
+                            <dt class="col-sm-6 fw-bold">Calculated Refund Amount</dt>
+                            <dd class="col-sm-6 fw-bold" style="font-size:1.25rem;">
+                                <span id="refundAmountDisplay">@calculatedRefundAmount.ToString("C", zaCulture)</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Validations</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var val in Enum.GetValues(typeof(RefundValidation)).Cast<RefundValidation>())
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       value="@val"
+                                       name="RefundValidations"
+                                       id="val-@val"
+                                       @(Model.RefundValidations != null && Model.RefundValidations.Contains(val) ? "checked" : "") />
+                                <label class="form-check-label" for="val-@val">
+                                    @val.GetDisplayName()
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 d-flex flex-column align-items-end mt-4">
+                <div class="fs-4 fw-bold mb-3">
+                    Total Amount to Refund:
+                    <span id="totalRefundAmount" class="ms-2">@calculatedRefundAmount.ToString("C", zaCulture)</span>
+                </div>
+                <div class="d-flex justify-content-end gap-3">
+                    <button type="submit" class="btn btn-primary">Process Refund</button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        Reject Request
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#escalateModal">
+                        Escalate to Supervisor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Modals for Image Zoom -->
+@section Scripts {
+    <script>
+        (function () {
+            function updateRefundAmount() {
+                const totalAmount = @baseRefund;
+                const couponBonusInput = document.getElementById('couponBonus');
+                let couponBonus = parseFloat(couponBonusInput.value) || 0;
+                let totalDeductionPercent = 0;
+                document.querySelectorAll('input[name="RefundPolicies"]:checked').forEach(el => {
+                    const val = el.value;
+                    if (val === '@RefundPolicy.LateClaimDeduction') {
+                        totalDeductionPercent += 0.15;
+                    } else if (val === '@RefundPolicy.PolicyDeduction') {
+                        totalDeductionPercent += 0.10;
+                    }
+                });
+                if (totalDeductionPercent > 1) totalDeductionPercent = 1;
+                const policyDeduction = totalAmount * totalDeductionPercent;
+                let refundAmount = totalAmount - policyDeduction - couponBonus;
+                if (refundAmount < 0) refundAmount = 0;
+                document.getElementById('refundAmountDisplay').textContent =
+                    new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(refundAmount);
+                document.getElementById('totalRefundAmount').textContent =
+                    new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(refundAmount);
+                // Update Policy Deduction dd
+                const dtElements = Array.from(document.querySelectorAll('dt'));
+                for (const dt of dtElements) {
+                    if (dt.textContent.trim() === 'Policy Deduction') {
+                        dt.nextElementSibling.textContent = '-' + new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(policyDeduction);
+                        break;
+                    }
+                }
+            }
+            document.querySelectorAll('input[name="RefundPolicies"], #couponBonus').forEach(el => {
+                el.addEventListener('change', updateRefundAmount);
+            });
+            window.submitReject = function () {
+                alert("Reject Request action not implemented.");
+                var rejectModal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
+                rejectModal.hide();
+            };
+            window.submitEscalate = function () {
+                alert("Escalate to Supervisor action not implemented.");
+                var escalateModal = bootstrap.Modal.getInstance(document.getElementById('escalateModal'));
+                escalateModal.hide();
+            };
+            document.addEventListener('DOMContentLoaded', updateRefundAmount);
+        })();
+    </script>
+}

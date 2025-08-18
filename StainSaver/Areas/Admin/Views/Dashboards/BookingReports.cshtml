@@ -1,0 +1,72 @@
+﻿@model List<StainSaver.Models.Booking>
+@{
+    ViewData["Title"] = "Booking Status Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    // Group bookings by status and count
+    var statusCounts = Model
+        .GroupBy(b => b.Status)
+        .Select(g => new { Status = g.Key.ToString(), Count = g.Count() })
+        .ToList();
+    // Prepare data for JavaScript
+    var labels = statusCounts.Select(sc => sc.Status).ToArray();
+    var data = statusCounts.Select(sc => sc.Count).ToArray();
+}
+
+<h1>Booking Status Report</h1>
+
+<div style="max-width: 480px; margin: auto;">
+    <canvas id="bookingStatusChart"></canvas>
+</div>
+
+@section Styles {
+    <style>
+        /* Optional: reduce legend font size to save space */
+        #bookingStatusChart + .chartjs-render-monitor + canvas {
+            max-width: 100%;
+        }
+        .chartjs-render-monitor {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('bookingStatusChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(labels)),
+                datasets: [{
+                    label: 'Number of Bookings',
+                    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(data)),
+                    backgroundColor: [
+                        '#48AAAD', '#7BC8C8', '#A6D1D1', '#D1E6E6', '#F0F8F8',
+                        '#4A90E2', '#50E3C2', '#B8E986', '#F8E71C'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            boxWidth: 12,
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+    </script>
+}

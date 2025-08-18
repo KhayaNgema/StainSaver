@@ -1,0 +1,244 @@
+﻿@model IEnumerable<StainSaver.Models.Delivery>
+@using StainSaver.Models
+@{
+    ViewData["Title"] = "Pending Deliveries";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string GetStatusClass(DeliveryStatus status) =>
+        status switch
+        {
+            DeliveryStatus.DriverAssigned => "status-default",
+            DeliveryStatus.Delivering => "status-warning",
+            DeliveryStatus.Delivered => "status-success",
+            _ => "status-default"
+        };
+}
+<style>
+    .order-card-col {
+        flex: 0 0 auto;
+        max-width: 380px;
+        margin-right: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .card-receipt {
+        background: #ffffff;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        border-radius: 0;
+        box-shadow: none;
+        border: 1px solid #265828;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eaeaea;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .order-number {
+        font-weight: 700;
+        font-size: 1.3rem;
+        color: #34495e;
+        word-wrap: normal;
+        overflow-wrap: normal;
+        white-space: normal;
+    }
+    .order-status {
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        padding: 0.2rem 0.8rem;
+        border-radius: 2px;
+        user-select: none;
+        min-width: 90px;
+        text-align: center;
+        letter-spacing: 0.05em;
+        font-family: 'Segoe UI Semibold', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        word-wrap: normal;
+        overflow-wrap: normal;
+        white-space: normal;
+    }
+    /* New status colors */
+    .status-default {
+        background-color: #6c757d; /* Gray */
+        color: #fff;
+    }
+    .status-warning {
+        background-color: #fd7e14; /* Orange */
+        color: #fff;
+    }
+    .status-success {
+        background-color: #198754; /* Green */
+        color: #fff;
+    }
+    .complain-description {
+        font-size: 0.95rem;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        word-wrap: normal;
+        overflow-wrap: normal;
+        white-space: normal;
+    }
+    .complain-description i {
+        color: #2c3e50;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    .card-footer {
+        margin-top: auto;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding-top: 1rem;
+    }
+    .btn-small {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 4px; /* slightly rounded */
+        font-weight: 600;
+        transition: background-color 0.25s ease;
+        border: none;
+        cursor: pointer;
+    }
+    /* See Location button style */
+    .btn-view-map {
+        background-color: #0d6efd; /* Bootstrap primary blue */
+        color: white;
+    }
+    .btn-view-map:hover {
+        background-color: #0b5ed7;
+        color: #fff;
+    }
+    /* Start Delivery button style (warning orange) */
+    .btn-pickup {
+        background-color: #fd7e14; /* Bootstrap warning orange */
+        color: white;
+    }
+    .btn-pickup:hover {
+        background-color: #e06c0a;
+        color: #fff;
+    }
+    /* Confirm Delivery button style (success green) */
+    .btn-confirm {
+        background-color: #198754; /* Bootstrap success green */
+        color: white;
+    }
+    .btn-confirm:hover {
+        background-color: #146c43;
+        color: #fff;
+    }
+    .d-flex.flex-column.flex-lg-row.flex-lg-wrap.overflow-auto.pb-3 {
+        flex-direction: column;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <h2 class="mb-0 text-white">Lost and Found Items Deliveries</h2>
+        <a href="/" class="btn btn-outline-light"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="container-fluid">
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No pending deliveries at the moment.</div>
+    }
+    else
+    {
+        <div class="d-flex flex-column flex-lg-row flex-lg-wrap overflow-auto pb-3">
+            @foreach (var delivery in Model)
+            {
+                <div class="order-card-col">
+                    <div class="card card-receipt">
+                        <div class="card-header">
+                            <div class="order-number">#@delivery.Package.ReferenceNumber</div>
+                            <div class="order-status @GetStatusClass(delivery.Status)">
+                                @delivery.Status.ToString()
+                            </div>
+                        </div>
+                        <div class="complain-description"><i class="fas fa-user"></i> @delivery.Complain?.Customer?.FullName</div>
+                        <div class="complain-description"><i class="fas fa-phone"></i> @delivery.Complain?.Customer?.PhoneNumber</div>
+                        <div class="complain-description"><i class="fas fa-envelope"></i> @delivery.Complain?.Customer?.Email</div>
+                        <div class="complain-description"><i class="fas fa-location"></i> @delivery.Complain?.Customer?.Address</div>
+                        <div class="complain-description"><i class="fas fa-calendar-alt"></i> @delivery.DeliveryDate.ToString("dd MMM yyyy HH:mm")</div>
+                        <div class="card-footer">
+                            @if (delivery.Status == DeliveryStatus.Delivering || delivery.Status == DeliveryStatus.Delivered)
+                            {
+                                <span style="font-weight:bold; color:#fd7e14;">Waiting for verification</span>
+                            }
+                            else
+                            {
+                                <button class="btn btn-small btn-pickup btn-pickup-action"
+                                        data-delivery-id="@delivery.DeliveryId"
+                                        type="button">
+                                    <i class="fas fa-truck-loading fa-lg"></i> Start Delivery
+                                </button>
+                                <span class="waiting-verification-text" style="display:none; font-weight:bold; color:#fd7e14; margin-left:8px;">Waiting Verification</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delivery</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="confirmModalBody">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <div>Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    @* Render the antiforgery token *@
+    @Html.AntiForgeryToken()
+    <script>
+        $(function () {
+            // Grab token value from the rendered hidden input field generated by @Html.AntiForgeryToken()
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $('.btn-pickup-action').on('click', function () {
+                var btn = $(this);
+                var deliveryId = btn.data('delivery-id');
+
+                $.ajax({
+                    url: '/Driver/Complains/StartDelivery',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: { deliveryId: deliveryId },
+                    success: function (response) {
+                        if (response.success) {
+                            btn.hide(); // hide the button clicked
+                            btn.siblings('.waiting-verification-text').show(); // show the adjacent verification text
+                        } else {
+                            alert('Failed to start delivery: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error occurred while starting delivery.');
+                    }
+                });
+            });
+        });
+    </script>
+}

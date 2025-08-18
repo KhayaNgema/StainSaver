@@ -1,0 +1,131 @@
+@model StainSaver.Models.Payment
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Payment Confirmation";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+    
+    // Get values from TempData
+    bool paymentSuccess = TempData["PaymentSuccess"] != null && (bool)TempData["PaymentSuccess"];
+    string txRef = TempData["TransactionReference"]?.ToString() ?? "N/A";
+    
+    // Parse amount with proper decimal formatting
+    decimal amountValue = 0;
+    if (TempData["PaymentAmount"] != null)
+    {
+        decimal.TryParse(TempData["PaymentAmount"].ToString(), 
+            NumberStyles.Any, 
+            CultureInfo.InvariantCulture, 
+            out amountValue);
+    }
+    string amount = amountValue.ToString("C", new CultureInfo("en-GB"));
+    
+    string paymentDate = TempData["PaymentDate"]?.ToString() ?? DateTime.Now.ToString("g");
+    int bookingId = TempData["BookingId"] != null ? Convert.ToInt32(TempData["BookingId"]) : 0;
+    bool isSimulation = Context.Request.Query.ContainsKey("simulation") && Context.Request.Query["simulation"] == "True";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white">
+                    <h3 class="text-center mb-0">Payment Successful</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Thank you for your booking!</h4>
+                        <p class="text-muted">Your payment has been successfully processed.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5 class="border-bottom pb-2">Transaction Details</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p><strong>Transaction Reference:</strong></p>
+                                <p class="text-muted">@txRef</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Booking ID:</strong></p>
+                                <p class="text-muted">@bookingId</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p><strong>Amount Paid:</strong></p>
+                                <p class="text-muted">@amount</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Payment Date:</strong></p>
+                                <p class="text-muted">@paymentDate</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model?.Booking != null)
+                    {
+                        <div class="mt-4">
+                            <h5 class="border-bottom pb-2">Booking Details</h5>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p><strong>Booking Date:</strong></p>
+                                    <p class="text-muted">@Model.Booking.BookingDate.ToString("d MMMM yyyy")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Pickup Date:</strong></p>
+                                    <p class="text-muted">@(Model.Booking.PickupDate.HasValue ? Model.Booking.PickupDate.Value.ToString("d MMMM yyyy HH:mm") : "N/A")</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong></p>
+                                    <p class="text-muted">@Model.Booking.Status</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (isSimulation || paymentSuccess)
+                    {
+                        <div class="mt-4">
+                            <h5 class="border-bottom pb-2">Booking Details</h5>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p><strong>Booking Date:</strong></p>
+                                    <p class="text-muted">@DateTime.Now.ToString("d MMMM yyyy")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong></p>
+                                    <p class="text-muted">Confirmed</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mt-4 text-center">
+                        <p>A confirmation email will be sent to your registered email address.</p>
+                        <p class="small text-muted mt-2">Please save this reference number for future inquiries.</p>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-center gap-3">
+                        <a asp-area="Customer" asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="bi bi-house-door me-2"></i>Back to Home
+                        </a>
+                        <a asp-area="Customer" asp-controller="Booking" asp-action="MyBookings" class="btn btn-primary">
+                            <i class="bi bi-list-check me-2"></i>View My Bookings
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-light text-center p-3">
+                    <p class="small text-muted mb-0">Having trouble? Contact our <a href="#">support team</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+} 

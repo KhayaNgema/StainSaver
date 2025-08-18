@@ -1,0 +1,173 @@
+﻿@model StainSaver.Areas.Customer.Models.ScanPackageViewModel
+@{
+    ViewData["Title"] = "Scan Package Barcode";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@Html.AntiForgeryToken()
+<style>
+    #scanner-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        min-height: 270px;
+        margin-bottom: 1.5rem;
+    }
+    #scanner {
+        width: 100%;
+        max-width: 330px;
+        height: 170px; /* Reduced height */
+        background: linear-gradient(135deg, #f5fafc 80%, #eef1f1 100%);
+        border: 3px solid #222;
+        border-radius: 20px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.17);
+        margin: 1.5rem 0 0.8rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .scanner-guides {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+    .scanner-guide-corner {
+        border: 3px solid #222;
+        width: 32px;
+        height: 32px;
+        position: absolute;
+    }
+    .scanner-guide-corner.top-left {
+        top: 10px; left: 10px;
+        border-right: none; border-bottom: none;
+        border-top-left-radius: 12px;
+    }
+    .scanner-guide-corner.top-right {
+        top: 10px; right: 10px;
+        border-left: none; border-bottom: none;
+        border-top-right-radius: 12px;
+    }
+    .scanner-guide-corner.bottom-left {
+        bottom: 10px; left: 10px;
+        border-right: none; border-top: none;
+        border-bottom-left-radius: 12px;
+    }
+    .scanner-guide-corner.bottom-right {
+        bottom: 10px; right: 10px;
+        border-left: none; border-top: none;
+        border-bottom-right-radius: 12px;
+    }
+    .alert {
+        max-width: 400px;
+        margin: 1.5rem auto 1rem auto;
+        font-size: 1rem;
+    }
+    h2, h5 {
+        color: #111 !important;
+    }
+</style>
+<br />
+<div class="container text-center">
+    <h2 class="mb-4">Scan Package Barcode</h2>
+    <h5 class="mb-4">
+        Please align the package barcode you received from the driver within the scanner area below to verify your item.
+    </h5>
+    <input type="hidden" id="packageId" value="@Model.PackageId" />
+    <div id="scanMessage" class="alert d-none" role="alert"></div>
+    <div id="scanner-container">
+        <div id="scanner">
+            <div class="scanner-guides">
+                <div class="scanner-guide-corner top-left"></div>
+                <div class="scanner-guide-corner top-right"></div>
+                <div class="scanner-guide-corner bottom-left"></div>
+                <div class="scanner-guide-corner bottom-right"></div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script>
+    $(function() {
+        var messageDiv = $("#scanMessage");
+        var scanningPaused = false;
+        function showMessage(text, isError) {
+            messageDiv.text(text)
+                      .removeClass('alert-success alert-danger d-none')
+                      .addClass(isError ? 'alert-danger' : 'alert-success');
+        }
+        function clearMessage() {
+            messageDiv.text('').addClass('d-none').removeClass('alert-success alert-danger');
+        }
+       function verifyPackage(scannedText) {
+    var packageId = $("#packageId").val();
+    $.ajax({
+        url: '@Url.Action("VerifyScannedPackage", "Complains", new { area = "Customer" })',
+        type: 'POST',
+        data: { scannedText: scannedText, packageId: packageId },
+        headers: {
+            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                showMessage("Item verified successfully! Redirecting...", false);
+                Quagga.stop();
+                setTimeout(function() {
+                    window.location.href = response.redirectUrl;
+                }, 1500);
+            } else {
+                showMessage(response.message || "Invalid item barcode.", true);
+                scanningPaused = false;
+            }
+        },
+        error: function() {
+            showMessage("An error occurred while verifying the item.", true);
+            scanningPaused = false;
+        }
+    });
+}
+
+        function startScanner() {
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#scanner'),
+                    constraints: {
+                        facingMode: "environment"
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader",
+                        "2of5_reader",
+                        "code_93_reader"
+                    ]
+                },
+                locate: true // try to locate the barcode in the image
+            }, function(err) {
+                if (err) {
+                    showMessage("Error starting scanner: " + err, true);
+                    return;
+                }
+                Quagga.start();
+            });
+            Quagga.onDetected(function(result) {
+                if (scanningPaused) return;
+                scanningPaused = true;
+                var code = result.codeResult.code.trim();
+                verifyPackage(code);
+            });
+        }
+        startScanner();
+    });
+</script>
+}

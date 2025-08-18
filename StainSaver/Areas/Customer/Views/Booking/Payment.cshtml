@@ -1,0 +1,292 @@
+@model StainSaver.Models.Payment
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Payment";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">Payment</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="Customer" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">My Bookings</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Payment</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Card Payment</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">
+                            <h6>Payment Error</h6>
+                            <p>@ViewBag.Error</p>
+                            @if (ViewBag.ValidationErrors != null)
+                            {
+                                <small class="d-block mt-2">Details: @ViewBag.ValidationErrors</small>
+                            }
+                        </div>
+                    }
+
+                    <form asp-action="Payment" method="post" id="payment-form">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="Amount" />
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5>Total Amount:</h5>
+                                <h3 class="text-primary">@Model.Amount.ToString("C", zaCulture)</h3>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>Booking #:</small>
+                                <small class="text-muted">@Model.BookingId</small>
+                            </div>
+                            @if (ViewBag.TotalSource != null)
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted">Amount source: @ViewBag.TotalSource</small>
+                                    @if (ViewBag.BookingAmount != null)
+                                    {
+                                        <small class="text-muted d-block">Booking amount: @ViewBag.BookingAmount.ToString("C", zaCulture)</small>
+                                    }
+                                </div>
+                            }
+                            @if (ViewBag.BookingReference != null)
+                            {
+                                <div class="mt-2 text-muted">
+                                    <p class="mb-1">Booking Reference: #@ViewBag.BookingReference</p>
+                                    <p class="mb-1">Booking Date: @(ViewBag.BookingDate?.ToString() ?? "N/A")</p>
+                                    <p class="mb-0">Pickup Date: @ViewBag.PickupDate</p>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CardHolderName" class="form-label">Card Holder Name</label>
+                            <input asp-for="CardHolderName" class="form-control" placeholder="As it appears on your card" required />
+                            <span asp-validation-for="CardHolderName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CardNumber" class="form-label">Card Number</label>
+                            <div class="input-group">
+                                <input asp-for="CardNumber" class="form-control" placeholder="XXXX-XXXX-XXXX-XXXX" required 
+                                       data-mask="0000-0000-0000-0000" pattern="\d{4}-\d{4}-\d{4}-\d{4}" />
+                                <span class="input-group-text">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard mx-1"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </span>
+                            </div>
+                            <span asp-validation-for="CardNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ExpiryDate" class="form-label">Expiry Date</label>
+                                <input asp-for="ExpiryDate" class="form-control" placeholder="MM/YY" required
+                                       data-mask="00/00" pattern="\d{2}/\d{2}" />
+                                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CVV" class="form-label">CVV</label>
+                                <input asp-for="CVV" class="form-control" placeholder="123" required
+                                       data-mask="000" pattern="\d{3}" />
+                                <span asp-validation-for="CVV" class="text-danger"></span>
+                                <small class="form-text text-muted">3-digit security code on the back of your card</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg payment-btn">
+                                <i class="fas fa-lock me-2"></i>Pay Securely
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Payment Amount:</strong>
+                        <span>@Model.Amount.ToString("C", zaCulture)</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Booking ID:</strong>
+                        <span>#@Model.BookingId</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span>@Model.Amount.ToString("C", zaCulture)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Payment Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-shield-alt text-success fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-0">Secure Payment</h6>
+                            <small class="text-muted">Your payment information is encrypted</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-lock text-success fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-0">Privacy Protected</h6>
+                            <small class="text-muted">Your personal data is safe with us</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-credit-card text-success fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-0">No Hidden Fees</h6>
+                            <small class="text-muted">The amount shown is what you pay</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Need Help?</h5>
+                </div>
+                <div class="card-body">
+                    <p>If you have any questions about payment or your booking, contact our customer support:</p>
+                    <p><i class="fas fa-phone me-2"></i>+27 XX XXX XXXX</p>
+                    <p><i class="fas fa-envelope me-2"></i>support@stainsaver.co.za</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <script>
+        $(document).ready(function() {
+            console.log("Payment form initialized");
+            
+            // Initialize input masks
+            $('#CardNumber').mask('0000-0000-0000-0000');
+            $('#ExpiryDate').mask('00/00');
+            $('#CVV').mask('000');
+            
+            // Track form submission
+            $('form').on('submit', function(e) {
+                console.log("Form submission triggered");
+                console.log("BookingId: " + $('#BookingId').val());
+                console.log("Amount: " + $('#Amount').val());
+                
+                // Validate all required fields
+                var isValid = true;
+                var requiredFields = ['CardHolderName', 'CardNumber', 'ExpiryDate', 'CVV'];
+                
+                // Check important hidden fields
+                if (!$('#BookingId').val() || $('#BookingId').val() <= 0) {
+                    console.error("Missing or invalid BookingId");
+                    isValid = false;
+                    
+                    // Try to fix the BookingId if we can get it from the URL
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var idFromUrl = urlParams.get('id');
+                    if (idFromUrl && !isNaN(idFromUrl) && parseInt(idFromUrl) > 0) {
+                        console.log("Setting BookingId from URL: " + idFromUrl);
+                        $('#BookingId').val(idFromUrl);
+                        isValid = true;
+                    }
+                }
+                
+                requiredFields.forEach(function(field) {
+                    var value = $('#' + field).val();
+                    if (!value || value.trim() === '') {
+                        console.log("Field " + field + " is empty");
+                        isValid = false;
+                        $('#' + field).addClass('is-invalid');
+                    } else {
+                        $('#' + field).removeClass('is-invalid');
+                    }
+                });
+                
+                if (!isValid) {
+                    console.log("Form validation failed");
+                    e.preventDefault();
+                    
+                    // Show validation alert
+                    $('<div class="alert alert-danger mt-3">Please fill in all required payment fields</div>')
+                        .insertBefore('.d-grid')
+                        .delay(5000)
+                        .fadeOut(function() {
+                            $(this).remove();
+                        });
+                    
+                    return false;
+                }
+                
+                console.log("Form validation passed, submitting payment...");
+                console.log("Form data: ", $(this).serialize());
+                
+                // Show processing indicator
+                $('.payment-btn').prop('disabled', true).html(
+                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+                    'Processing...'
+                );
+                
+                // Let the form submit normally
+                return true;
+            });
+            
+            // Fix for validation issues with input masks
+            $('#CardNumber, #ExpiryDate, #CVV').on('blur', function() {
+                var $this = $(this);
+                var val = $this.val();
+                
+                // Check if the field has the correct format based on its mask
+                var isValid = true;
+                
+                if ($this.attr('id') === 'CardNumber') {
+                    isValid = /^\d{4}-\d{4}-\d{4}-\d{4}$/.test(val);
+                } else if ($this.attr('id') === 'ExpiryDate') {
+                    isValid = /^\d{2}\/\d{2}$/.test(val);
+                } else if ($this.attr('id') === 'CVV') {
+                    isValid = /^\d{3}$/.test(val);
+                }
+                
+                if (!isValid && val.trim() !== '') {
+                    $this.addClass('is-invalid');
+                } else {
+                    $this.removeClass('is-invalid');
+                }
+            });
+        });
+    </script>
+} 

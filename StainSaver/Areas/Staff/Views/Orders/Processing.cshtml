@@ -1,0 +1,77 @@
+@model IEnumerable<StainSaver.Models.BookingDetail>
+@{
+    ViewData["Title"] = "Orders in Processing";
+    var zaCulture = new System.Globalization.CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <p>These are the laundry tasks that are currently being processed by you.</p>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h2>Tasks in Progress</h2>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service</th>
+                                <th>Customer</th>
+                                <th>Pickup Date</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>
+                                        <div>@item.LaundryService.Name</div>
+                                        <small class="text-muted">@item.LaundryService.Description</small>
+                                    </td>
+                                    <td>
+                                        <div>@item.Booking.Customer.FullName</div>
+                                        <small class="text-muted">@item.Booking.Customer.Email</small>
+                                    </td>
+                                    <td>@(item.Booking.PickupDate.HasValue ? item.Booking.PickupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Not scheduled")</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.Price.ToString("C", zaCulture)</td>
+                                    <td><span class="badge bg-success">@item.Status</span></td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle me-1"></i>Details
+                                        </a>
+                                        <a asp-action="MarkComplete" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-check me-1"></i>Mark Complete
+                                        </a>
+                                        <a asp-action="CancelTask" asp-route-id="@item.Id" class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to remove this task from your queue? All progress will be lost.');">
+                                            <i class="fas fa-times me-1"></i>Remove
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-4 text-center">
+                    <i class="fas fa-hourglass text-muted mb-3" style="font-size: 3rem;"></i>
+                    <h5>No Tasks in Processing</h5>
+                    <p class="text-muted">You don't have any laundry tasks currently being processed.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

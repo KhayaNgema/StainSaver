@@ -1,0 +1,358 @@
+﻿@model StainSaver.Areas.Customer.Models.ComplainViewModel
+@using StainSaver.Models
+@using System.Globalization
+@inject Microsoft.AspNetCore.Mvc.Rendering.IHtmlHelper Html
+@{
+    ViewData["Title"] = "File a Complain";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Lost and Found Complains</h2>
+        </div>
+        <a asp-area="Customer" asp-controller="Booking" asp-action="Details" asp-route-id="@Model.BookingId" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">New Complain</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="refund-form-container">
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger">
+                <h5>Error</h5>
+                <pre>@ViewBag.Error</pre>
+            </div>
+        }
+        <form asp-action="Complain" method="post" enctype="multipart/form-data" id="complainForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Complain Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="ComplainType" class="form-label"></label>
+                                <select asp-for="ComplainType" class="form-select" id="complainType" asp-items="Html.GetEnumSelectList<ComplainType>()">
+                                    <option value="">-- Select Complain Type --</option>
+                                </select>
+                                <span asp-validation-for="ComplainType" class="text-danger"></span>
+                            </div>
+                            <!-- Refund Fields -->
+                            <div id="refundFields" style="display:none;">
+                                <div class="mb-3">
+                                    <label asp-for="Bank" class="form-label"></label>
+                                    <select asp-for="Bank" class="form-select" id="BankName" asp-items="Html.GetEnumSelectList<Bank>()">
+                                        <option value="">-- Select Bank Name --</option>
+                                    </select>
+                                    <span asp-validation-for="Bank" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="BankAccountType" class="form-label"></label>
+                                    <select asp-for="BankAccountType" class="form-select" id="BankAccountType" asp-items="Html.GetEnumSelectList<BankAccountType>()">
+                                        <option value="">-- Select Bank Account Type --</option>
+                                    </select>
+                                    <span asp-validation-for="BankAccountType" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="BankAccountNumber" class="form-label"></label>
+                                    <input asp-for="BankAccountNumber" id="BankAccountNumber" class="form-control" placeholder="Enter bank account number" />
+                                    <span asp-validation-for="BankAccountNumber" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="ReasonForRefund" class="form-label"></label>
+                                    <select asp-for="ReasonForRefund" class="form-select" id="ReasonForRefund" asp-items="Html.GetEnumSelectList<RefundTo>()">
+                                        <option value="">-- Select Refund Reason --</option>
+                                    </select>
+                                    <span asp-validation-for="ReasonForRefund" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Description" class="form-label"></label>
+                                    <textarea asp-for="Description" id="RefundDescription" rows="4" class="form-control" placeholder="Provide more details"></textarea>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                                <div id="refundItemsContainer" class="row mb-3">
+                                    <h6 class="col-12">Refund Items</h6>
+                                    <div class="col-12 mb-2">
+                                        <button type="button" id="addRefundItemBtn" class="btn btn-success btn-sm">Add Refund Item</button>
+                                    </div>
+                                    <!-- Dynamic refund items appended here with col-md-6 -->
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="ProofOfPayment" class="form-label"></label>
+                                        <div class="custom-image-upload-container" tabindex="0" data-input-id="ProofOfPayment">
+                                            <input asp-for="ProofOfPayment" type="file" accept="image/*" style="display:none;" />
+                                            <div class="custom-image-upload-content">
+                                                <i class="fas fa-camera fa-2x"></i>
+                                                <p>Click here to upload or drag image</p>
+                                            </div>
+                                            <img class="preview-image" style="display:none;max-width:100%;max-height:200px;margin-top:12px;" />
+                                        </div>
+                                        <span asp-validation-for="ProofOfPayment" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Lost And Found Fields -->
+                            <div id="lostFoundFields" style="display:none;">
+                                <label class="form-label">Purpose of Contact</label>
+                                <div class="form-check">
+                                    <input type="radio" class="form-check-input" id="contactIsFound" name="PurposeOfContact" value="IsFound" />
+                                    <label class="form-check-label" for="contactIsFound">Item Found</label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input type="radio" class="form-check-input" id="contactIsLost" name="PurposeOfContact" value="IsLost" />
+                                    <label class="form-check-label" for="contactIsLost">Item Lost</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="LostOrFoundDate" class="form-label"></label>
+                                    <input asp-for="LostOrFoundDate" id="LostOrFoundDate" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                    <span asp-validation-for="LostOrFoundDate" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="LostFoundDescription" class="form-label"></label>
+                                    <textarea asp-for="LostFoundDescription" id="LostFoundDescription" rows="4" class="form-control" placeholder="Provide more details"></textarea>
+                                    <span asp-validation-for="LostFoundDescription" class="text-danger"></span>
+                                </div>
+                                <div id="lostFoundItemsContainer" class="row mb-3">
+                                    <h6 class="col-12">Lost or Found Items</h6>
+                                    <div class="col-12 mb-2">
+                                        <button type="button" id="addLostFoundItemBtn" class="btn btn-success btn-sm">Add Lost/Found Item</button>
+                                    </div>
+                                    <!-- Dynamic lost/found items appended here with col-md-6 -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="IsLost" name="IsLost" value="@Model.IsLost" />
+                            <input type="hidden" id="IsFound" name="IsFound" value="@Model.IsFound" />
+                            <input type="hidden" id="BookingId" name="BookingId" value="@Model.BookingId" />
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit Complain</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .custom-image-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dotted #43a047;
+            border-radius: 12px;
+            padding: 32px 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            background: #f9fff9;
+            min-height: 150px;
+            position: relative;
+            outline: none;
+        }
+        .custom-image-upload-container.dragover {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+        }
+        .custom-image-upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #43a047;
+            pointer-events: none;
+        }
+        .custom-image-upload-content i {
+            margin-bottom: 8px;
+        }
+        .custom-image-upload-container .preview-image {
+            margin-top: 12px;
+            display: block;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            max-width: 100%;
+            max-height: 200px;
+        }
+    </style>
+}
+
+@section Scripts {
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Setup custom image upload container interaction
+    function setupCustomImageUpload(container) {
+        const fileInput = container.querySelector('input[type="file"]');
+        const content = container.querySelector('.custom-image-upload-content');
+        const previewImg = container.querySelector('.preview-image');
+        // Click to open file dialog
+        container.addEventListener('click', function (e) {
+            if (e.target !== fileInput) fileInput.click();
+        });
+        // Keyboard accessibility: open file dialog on Enter or Space
+        container.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                fileInput.click();
+            }
+        });
+        // Drag and drop handlers
+        container.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            container.classList.add('dragover');
+        });
+        container.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            container.classList.remove('dragover');
+        });
+        container.addEventListener('drop', function (e) {
+            e.preventDefault();
+            container.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                showImagePreview(fileInput, previewImg, content);
+            }
+        });
+        // File input change event to preview selected image
+        fileInput.addEventListener('change', function () {
+            showImagePreview(fileInput, previewImg, content);
+        });
+    }
+    // Show image preview and hide placeholder content
+    function showImagePreview(fileInput, previewImg, content) {
+        if (fileInput.files && fileInput.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.style.display = 'block';
+                previewImg.src = e.target.result;
+                content.style.display = 'none';
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            previewImg.style.display = 'none';
+            previewImg.src = '';
+            content.style.display = 'flex';
+        }
+    }
+    // Initialize all existing image upload containers
+    document.querySelectorAll('.custom-image-upload-container').forEach(setupCustomImageUpload);
+
+    // Dynamically add refund items with image uploader
+    document.getElementById("addRefundItemBtn")?.addEventListener("click", function () {
+        const container = document.getElementById("refundItemsContainer");
+        const idx = container.querySelectorAll(".refund-item").length;
+        const newItem = document.createElement("div");
+        newItem.classList.add("refund-item", "col-md-6", "mb-3");
+        newItem.setAttribute("data-index", idx);
+        newItem.innerHTML = `
+            <input type="text" name="RefundItems[${idx}].RefundItemName" class="form-control mb-2" placeholder="Refund item name" />
+            <div class="custom-image-upload-container" tabindex="0" data-input-id="RefundItems[${idx}].ImageFile">
+                <input type="file" name="RefundItems[${idx}].ImageFile" accept="image/*" style="display:none;" />
+                <div class="custom-image-upload-content">
+                    <i class="fas fa-camera fa-2x"></i>
+                    <p>Click here to upload or drag image</p>
+                </div>
+                <img class="preview-image" style="display:none;max-width:100%;max-height:200px;margin-top:12px;" />
+            </div>
+            <button type="button" class="btn btn-danger btn-sm removeRefundItemBtn mt-2">Remove</button>
+        `;
+        container.appendChild(newItem);
+        setupCustomImageUpload(newItem.querySelector('.custom-image-upload-container'));
+        newItem.querySelector(".removeRefundItemBtn").addEventListener("click", () => {
+            newItem.remove();
+            updateIndices(container, "RefundItems");
+        });
+    });
+
+    // Dynamically add lost/found items with image uploader
+    document.getElementById("addLostFoundItemBtn")?.addEventListener("click", function () {
+        const container = document.getElementById("lostFoundItemsContainer");
+        const idx = container.querySelectorAll(".lostfound-item").length;
+        const newItem = document.createElement("div");
+        newItem.classList.add("lostfound-item", "col-md-6", "mb-3");
+        newItem.setAttribute("data-index", idx);
+        newItem.innerHTML = `
+            <input type="text" name="LostOrFoundItems[${idx}].ItemDescription" class="form-control mb-2" placeholder="Item description" />
+            <div class="custom-image-upload-container" tabindex="0" data-input-id="LostOrFoundItems[${idx}].ImageFile">
+                <input type="file" name="LostOrFoundItems[${idx}].ImageFile" accept="image/*" style="display:none;" />
+                <div class="custom-image-upload-content">
+                    <i class="fas fa-camera fa-2x"></i>
+                    <p>Click here to upload or drag image</p>
+                </div>
+                <img class="preview-image" style="display:none;max-width:100%;max-height:200px;margin-top:12px;" />
+            </div>
+            <button type="button" class="btn btn-danger btn-sm removeLostFoundItemBtn mt-2">Remove</button>
+        `;
+        container.appendChild(newItem);
+        setupCustomImageUpload(newItem.querySelector('.custom-image-upload-container'));
+        newItem.querySelector(".removeLostFoundItemBtn").addEventListener("click", () => {
+            newItem.remove();
+            updateIndices(container, "LostOrFoundItems");
+        });
+    });
+
+    // Update indices and input names after any removal
+    function updateIndices(container, prefix) {
+        const items = container.querySelectorAll(`.${prefix.toLowerCase()}-item, .refund-item, .lostfound-item`);
+        items.forEach((item, idx) => {
+            item.setAttribute("data-index", idx);
+            item.querySelectorAll("input[type='text'], input[type='file']").forEach(input => {
+                const oldName = input.name;
+                if (oldName) {
+                    input.name = oldName.replace(/\[\d+\]/, `[${idx}]`);
+                }
+            });
+        });
+    }
+
+    // Complain type change logic
+    const complainTypeSelect = document.getElementById("complainType");
+    const refundFields = document.getElementById("refundFields");
+    const lostFoundFields = document.getElementById("lostFoundFields");
+    const isLostHidden = document.getElementById("IsLost");
+    const isFoundHidden = document.getElementById("IsFound");
+    const radioIsLost = document.getElementById("contactIsLost");
+    const radioIsFound = document.getElementById("contactIsFound");
+    function updateLostFoundHidden() {
+        if (radioIsLost) isLostHidden.value = radioIsLost.checked ? 'true' : 'false';
+        if (radioIsFound) isFoundHidden.value = radioIsFound.checked ? 'true' : 'false';
+    }
+    if (radioIsLost) radioIsLost.addEventListener("change", updateLostFoundHidden);
+    if (radioIsFound) radioIsFound.addEventListener("change", updateLostFoundHidden);
+    function onComplainTypeChange() {
+        const val = complainTypeSelect.value;
+        if (val === "0") { // Refund
+            refundFields.style.display = "block";
+            lostFoundFields.style.display = "none";
+        } else if (val === "1") { // Lost_and_found
+            refundFields.style.display = "none";
+            lostFoundFields.style.display = "block";
+        } else {
+            refundFields.style.display = "none";
+            lostFoundFields.style.display = "none";
+        }
+    }
+    complainTypeSelect.addEventListener("change", onComplainTypeChange);
+    onComplainTypeChange();
+    updateLostFoundHidden();
+});
+</script>
+}
+
+<!-- Include FontAwesome CDN for camera icon -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />

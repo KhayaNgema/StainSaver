@@ -1,0 +1,53 @@
+@model StainSaver.Areas.Admin.Models.UsersViewModel
+
+@{
+    ViewData["Title"] = "Users by Role";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>This page shows all users categorized by role.</p>
+    
+    @foreach (var role in Model.Roles)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2>@role.RoleName Role</h2>
+            </div>
+            <div class="card-body">
+                @if (role.Users.Any())
+                {
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>ID Number</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in role.Users)
+                            {
+                                <tr>
+                                    <td>@user.FullName</td>
+                                    <td>@user.Email</td>
+                                    <td>@user.PhoneNumber</td>
+                                    <td>@user.IdNumber</td>
+                                    <td>
+                                        @user.StreetAddress, @user.Suburb, @user.City, @user.Province, @user.PostalCode
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No users found in this role.</p>
+                }
+            </div>
+        </div>
+    }
+</div> 

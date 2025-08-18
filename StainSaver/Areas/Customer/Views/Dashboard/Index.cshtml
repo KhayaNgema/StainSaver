@@ -1,0 +1,106 @@
+@model StainSaver.Areas.Customer.Models.CustomerDashboardViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <h1>@Model.Title</h1>
+    <p>Welcome to your StainSaver customer portal.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.ActiveOrders</h2>
+                    <p class="card-text">Active Orders</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Customer" asp-controller="Booking" asp-action="Index">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.CompletedOrders</h2>
+                    <p class="card-text">Completed Orders</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Customer" asp-controller="Booking" asp-action="Index">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.PendingPayments</h2>
+                    <p class="card-text">Pending Payments</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Customer" asp-controller="Booking" asp-action="Index">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white mb-4" style="background-color:rebeccapurple;">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.ActiveComplains</h2>
+                    <p class="card-text">Complains</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Customer" asp-controller="Complains" asp-action="Index">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    New Order
+                </div>
+                <div class="card-body">
+                    <p>Ready to get your laundry cleaned? Create a new order now!</p>
+                    <a asp-area="Customer" asp-controller="Booking" asp-action="Create" class="btn btn-primary">Create New Order</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-history me-1"></i>
+                    Recent Orders
+                </div>
+                <div class="card-body">
+                    <p>This section would display your recent orders.</p>
+                    <a asp-area="Customer" asp-controller="Booking" asp-action="Index" class="btn btn-outline-primary">View All Orders</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-credit-card me-1"></i>
+                    Payment Methods
+                </div>
+                <div class="card-body">
+                    <p>Manage your payment methods here.</p>
+                    <a asp-area="Customer" asp-controller="Booking" asp-action="Index" class="btn btn-outline-primary">View Payments</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Additional scripts for the customer dashboard can be added here -->
+} 

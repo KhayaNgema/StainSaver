@@ -1,0 +1,100 @@
+@model StainSaver.Areas.Customer.Models.NotificationViewModel
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">My Notifications</h1>
+        <div>
+            <a asp-area="Customer" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-primary me-2">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+            @if (Model.UnreadCount > 0)
+            {
+                <a asp-action="MarkAllAsRead" class="btn btn-success"
+                   onclick="return confirm('Are you sure you want to mark all notifications as read?');">
+                    <i class="fas fa-check-double me-2"></i>Mark All as Read
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            @if (Model.Notifications.Any())
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Notifications (@Model.Notifications.Count)</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach (var notification in Model.Notifications)
+                        {
+                            <div class="list-group-item @(notification.IsRead ? "" : "list-group-item-primary")">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@notification.Title</h5>
+                                    <small class="text-muted">@notification.CreatedDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+                                </div>
+                                <p class="mb-1">@notification.Message</p>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div>
+                                        @if (notification.BookingId.HasValue)
+                                        {
+                                            <a asp-area="Customer" asp-controller="Booking" asp-action="Details" asp-route-id="@notification.BookingId" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-info-circle me-1"></i>View Booking
+                                            </a>
+                                        }
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <a asp-action="MarkAsRead" asp-route-id="@notification.Id" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-check me-1"></i>Mark as Read
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Read</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">No notifications!</h4>
+                    <p>You don't have any notifications at the moment. Check back later for updates on your bookings.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Mark notification as read via AJAX
+        function markAsRead(id) {
+            fetch(`/Customer/Notifications/MarkAsRead/${id}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.querySelector(`#notification-${id}`).classList.remove('list-group-item-primary');
+                    document.querySelector(`#notification-${id} .mark-read-btn`).style.display = 'none';
+                    document.querySelector(`#notification-${id} .read-badge`).style.display = 'inline-block';
+                }
+            });
+            return false;
+        }
+    </script>
+} 

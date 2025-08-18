@@ -1,0 +1,77 @@
+﻿@model StainSaver.Areas.Admin.Models.ScheduleDeliveryViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Schedule Delivery";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Schedule Delivery</h2>
+        </div>
+    </div>
+</div>
+<div class="container d-flex justify-content-center align-items-start" style="min-height: 80vh; padding-top: 2rem;">
+    <div class="col-md-6">
+        <form asp-action="ScheduleDelivery" method="post" class="needs-validation" novalidate>
+            @Html.AntiForgeryToken()
+            <input asp-for="PackageId" type="hidden" />
+            <input asp-for="ComplainId" type="hidden" />
+            <input asp-for="ComplainType" type="hidden" />
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="DeliveryDate" class="form-label">Delivery Date</label>
+                        <input asp-for="DeliveryDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        <span asp-validation-for="DeliveryDate" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="DriverId" class="form-label">Driver</label>
+                        <select asp-for="DriverId" class="form-select" required>
+                            <option value="">-- Select Driver --</option>
+                            @if (ViewBag.Drivers != null)
+                            {
+                                foreach (var driver in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Drivers)
+                                {
+                                    <option value="@driver.Value">@driver.Text</option>
+                                }
+                            }
+                        </select>
+                        <div class="invalid-feedback">Please select a driver.</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="customButton">
+                        <i class="fas fa-clock me-2"></i> Schedule
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Bootstrap form validation for required fields
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+}

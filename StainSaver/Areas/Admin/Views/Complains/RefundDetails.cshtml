@@ -1,0 +1,243 @@
+@model StainSaver.Models.Refund
+@using System.ComponentModel.DataAnnotations
+@using StainSaver.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = $"Refund Details - #{Model.RefundId}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+    string NormalizePath(string path) => string.IsNullOrWhiteSpace(path) ? path : path.Replace("\\", "/");
+    string GetRefundStatusBadgeColor(RefundStatus status) => status switch
+    {
+        RefundStatus.Processed => "success",
+        RefundStatus.Rejected => "danger",
+        RefundStatus.Cancelled => "warning",
+        RefundStatus.Refunded => "primary",
+        _ => "secondary",
+    };
+    string GetDisplayName(Enum enumValue)
+    {
+        var display = enumValue.GetType()
+            .GetMember(enumValue.ToString())
+            .FirstOrDefault()?
+            .GetCustomAttributes(typeof(DisplayAttribute), false)
+            .Cast<DisplayAttribute>()
+            .FirstOrDefault();
+        return display?.Name ?? enumValue.ToString();
+    }
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <h2 class="mb-0 text-white">Refund Details - #@Model.RefundId</h2>
+        <a asp-controller="Refunds" asp-action="Index" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Back to Refunds List
+        </a>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Refund Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Refund ID</dt>
+                        <dd class="col-sm-8">@Model.RefundId</dd>
+                        <dt class="col-sm-4">Refunded Amount</dt>
+                        <dd class="col-sm-8">@Model.RefundedAmount.ToString("C", zaCulture)</dd>
+                        <dt class="col-sm-4">Coupon Bonus</dt>
+                        <dd class="col-sm-8">@Model.CouponBonus.ToString("C", zaCulture)</dd>
+                        <dt class="col-sm-4">Refund Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-@GetRefundStatusBadgeColor(Model.Status)">
+                                @Model.Status.GetDisplayName()
+                            </span>
+                        </dd>
+                    </dl>
+                    <h6>Refund Policies</h6>
+                    <ul>
+                        @foreach (var entry in Model.RefundPolicyEntries)
+                        {
+                            <li>@GetDisplayName(entry.RefundPolicy)</li>
+                        }
+                        @if (!Model.RefundPolicyEntries.Any())
+                        {
+                            <li>No policies applied</li>
+                        }
+                    </ul>
+                    <h6>Refund Validations</h6>
+                    <ul>
+                        @foreach (var entry in Model.RefundValidationEntries)
+                        {
+                            <li>@GetDisplayName(entry.RefundValidation)</li>
+                        }
+                        @if (!Model.RefundValidationEntries.Any())
+                        {
+                            <li>No validations recorded</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            @if (Model.Complain != null)
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Related Complain</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Complain Reference</dt>
+                            <dd class="col-sm-8">@Model.Complain.ReferenceNumber</dd>
+                            <dt class="col-sm-4">Type</dt>
+                            <dd class="col-sm-8">@Model.Complain.ComplainType.GetDisplayName()</dd>
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">@Model.Complain.Status.GetDisplayName()</dd>
+                            <dt class="col-sm-4">Description</dt>
+                            <dd class="col-sm-8">@Model.Complain.Description</dd>
+                            @* Display Refund Items *@
+                            @if (Model.Complain.RefundItems != null && Model.Complain.RefundItems.Any())
+                            {
+                                <dt class="col-sm-4">Refund Items</dt>
+                                <dd class="col-sm-8">
+                                    <ul class="list-unstyled">
+                                        @foreach (var refundItem in Model.Complain.RefundItems)
+                                        {
+                                            <li class="mb-2">
+                                                <strong>@refundItem.RefundItemName</strong><br />
+                                                @if (!string.IsNullOrWhiteSpace(refundItem.ImageUrl))
+                                                {
+                                                    var imgPath = NormalizePath(refundItem.ImageUrl);
+                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Refund Item Image" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;"
+                                                         data-bs-toggle="modal" data-bs-target="#refundItemModal_@refundItem.RefundItemId" />
+                                                    <div class="modal fade" id="refundItemModal_@refundItem.RefundItemId" tabindex="-1" aria-labelledby="refundItemModalLabel_@refundItem.RefundItemId" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="refundItemModalLabel_@refundItem.RefundItemId">@refundItem.RefundItemName</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body text-center">
+                                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Refund Item Image" class="img-fluid zoomable-image"
+                                                                         onclick="this.classList.toggle('zoomed')" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </dd>
+                            }
+                           @* Proof of Damage images are in child RefundItems, not directly on Complain *@
+@{
+    var proofOfDamageItems = Model.Complain.RefundItems?.Where(i => !string.IsNullOrEmpty(i.ImageUrl)).ToList();
+}
+@if (proofOfDamageItems != null && proofOfDamageItems.Any())
+{
+    foreach (var item in proofOfDamageItems)
+    {
+        var damageImgPath = NormalizePath(item.ImageUrl);
+        var damageModalId = $"modalProofDamage_{item.RefundItemId}";
+        <dt class="col-sm-4">Proof of Damage - @item.RefundItemName</dt>
+        <dd class="col-sm-8">
+            <img src="@Url.Content($"~/{damageImgPath}")"
+                 alt="Proof of Damage"
+                 class="img-thumbnail"
+                 style="max-height:150px; max-width:150px; cursor:pointer;"
+                 data-bs-toggle="modal"
+                 data-bs-target="#@damageModalId" />
+            <div class="modal fade" id="@damageModalId" tabindex="-1" aria-labelledby="@($"{damageModalId}_Label")" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="@($"{damageModalId}_Label")">Proof of Damage - @item.RefundItemName</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="@Url.Content($"~/{damageImgPath}")" alt="Proof of Damage" class="img-fluid zoomable-image" onclick="this.classList.toggle('zoomed')" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </dd>
+    }
+}
+else
+{
+    <dt class="col-sm-4">Proof of Damage</dt>
+    <dd class="col-sm-8">
+        <span class="text-muted">N/A</span>
+    </dd>
+}
+
+@* Proof of Payment is directly on Complain, so it's ok to display like this *@
+@if (!string.IsNullOrWhiteSpace(Model.Complain.ProofOfPayment))
+{
+    var proofPaymentPath = NormalizePath(Model.Complain.ProofOfPayment);
+    var proofPaymentModalId = $"modalProofPayment_{Model.Complain.ComplainId}";
+    <dt class="col-sm-4">Proof of Payment</dt>
+    <dd class="col-sm-8">
+        <img src="@Url.Content($"~/{proofPaymentPath}")" alt="Proof of Payment" class="img-thumbnail" style="max-height:150px; max-width:150px; cursor:pointer;"
+            data-bs-toggle="modal" data-bs-target="#@proofPaymentModalId" />
+        <div class="modal fade" id="@proofPaymentModalId" tabindex="-1" aria-labelledby="@($"{proofPaymentModalId}_Label")" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="@($"{proofPaymentModalId}_Label")">Proof of Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="@Url.Content($"~/{proofPaymentPath}")" alt="Proof of Payment Full Size" class="img-fluid zoomable-image" onclick="this.classList.toggle('zoomed')" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dd>
+}
+else
+{
+    <dt class="col-sm-4">Proof of Payment</dt>
+    <dd class="col-sm-8">
+        <span class="text-muted">N/A</span>
+    </dd>
+}
+
+                        </dl>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Complain?.Customer != null)
+                    {
+                        <p><strong>Name:</strong> @Model.Complain.Customer.FullName</p>
+                        <p><strong>Email:</strong> <a href="mailto:@Model.Complain.Customer.Email">@Model.Complain.Customer.Email</a></p>
+                        <p><strong>Phone:</strong> @Model.Complain.Customer.PhoneNumber</p>
+                        <p><strong>Address:</strong> @Model.Complain.Customer.Address</p>
+                    }
+                    else
+                    {
+                        <p>No customer details available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.querySelectorAll('.zoomable-image').forEach(img => {
+            img.addEventListener('click', () => {
+                img.classList.toggle('zoomed');
+            });
+        });
+    </script>
+}

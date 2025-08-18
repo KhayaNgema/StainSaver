@@ -1,0 +1,109 @@
+@model StainSaver.Areas.Admin.Models.AssignDriverViewModel
+
+@{
+    ViewData["Title"] = "Assign Driver";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Assign Driver to Booking #@Model.BookingId</h1>
+        <div>
+            <a asp-action="Details" asp-route-id="@Model.BookingId" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Details
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Select Driver</h5>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger mb-4">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:
+                            </h5>
+                            <div asp-validation-summary="All" class="text-danger list-unstyled mb-0"></div>
+                        </div>
+                    }
+                    
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger mb-4">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Error
+                            </h5>
+                            <p class="mb-0">@TempData["ErrorMessage"]</p>
+                        </div>
+                    }
+                    
+                    <form asp-action="AssignDriver" method="post">
+                        <input type="hidden" asp-for="BookingId" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="DriverId" class="form-label">Driver</label>
+                            <select asp-for="DriverId" asp-items="Model.Drivers" class="form-select form-select-lg">
+                                <option value="">-- Select a Driver --</option>
+                            </select>
+                            <span asp-validation-for="DriverId" class="text-danger"></span>
+                            <div class="form-text mt-2">Select a driver to assign for pickup and delivery of this booking.</div>
+                        </div>
+                        
+                        @if (Model.Booking?.Customer != null)
+                        {
+                            <div class="alert alert-info mb-4">
+                                <h6 class="mb-2">Customer Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> @Model.Booking.Customer.FullName</p>
+                                <p class="mb-1"><strong>Phone:</strong> @Model.Booking.Customer.PhoneNumber</p>
+                                <p class="mb-0"><strong>Address:</strong> @Model.Booking.Customer.Address</p>
+                            </div>
+                        }
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-truck me-2"></i>Assign Driver
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Add additional validation and UI enhancement
+        $(document).ready(function() {
+            // Enhance the select box with focus styling
+            $('select.form-select').on('change', function() {
+                if ($(this).val()) {
+                    $(this).addClass('border-primary');
+                } else {
+                    $(this).removeClass('border-primary');
+                }
+            });
+            
+            // Form validation
+            $('form').on('submit', function(e) {
+                if (!$('#DriverId').val()) {
+                    e.preventDefault();
+                    $('#DriverId').addClass('is-invalid border-danger');
+                    
+                    if ($('.driver-error').length === 0) {
+                        $('<div class="invalid-feedback driver-error">Please select a driver</div>').insertAfter('#DriverId');
+                    }
+                    
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+} 

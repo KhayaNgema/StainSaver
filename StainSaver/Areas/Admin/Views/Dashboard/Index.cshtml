@@ -1,0 +1,223 @@
+@model StainSaver.Areas.Admin.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var zaCulture = new System.Globalization.CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome to the admin portal of StainSaver.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.TotalBookings</h2>
+                    <p class="card-text">Total Bookings</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Admin" asp-controller="Bookings" asp-action="Index">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.TotalDrivers</h2>
+                    <p class="card-text">Total Refund Complains</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Admin" asp-controller="Complains" asp-action="RefundComplains">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.TotalBookings</h2>
+                    <p class="card-text">Total Lost/Found Complains</p>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" asp-area="Admin" asp-controller="Complains" asp-action="LostOrFoundComplains">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-file-invoice me-1"></i>
+                    Recent Bookings
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentBookings.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in Model.RecentBookings)
+                                    {
+                                        <tr>
+                                            <td>@booking.Id</td>
+                                            <td>@booking.Customer.FullName</td>
+                                            <td>@booking.BookingDate.ToString("d")</td>
+                                            <td>@booking.Status</td>
+                                            <td>
+                                                <a asp-area="Admin" asp-controller="Bookings" asp-action="Details" asp-route-id="@booking.Id" class="btn btn-sm btn-primary">Details</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No recent bookings to display.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Booking Statistics
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body p-3">
+                                    <h4>@Model.PendingBookings</h4>
+                                    <p class="mb-0">Pending Bookings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body p-3">
+                                    <h4>@Model.CompletedBookings</h4>
+                                    <p class="mb-0">Completed Bookings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body p-3">
+                                    <h4>@Model.TotalRevenue.ToString("C", zaCulture)</h4>
+                                    <p class="mb-0">Total Revenue</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Pending Staff Assignments
+                </div>
+                <div class="card-body">
+                    @if (Model.PendingAssignments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Service</th>
+                                        <th>Customer</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detail in Model.PendingAssignments)
+                                    {
+                                        <tr>
+                                            <td>@detail.Id</td>
+                                            <td>@detail.LaundryService.Name</td>
+                                            <td>@detail.Booking.Customer.FullName</td>
+                                            <td>
+                                                <a asp-area="Admin" asp-controller="Bookings" asp-action="AssignStaff" asp-route-id="@detail.Id" class="btn btn-sm btn-primary">Assign Staff</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No pending staff assignments.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-truck me-1"></i>
+                    Unassigned Pickups
+                </div>
+                <div class="card-body">
+                    @if (Model.UnassignedPickups.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer</th>
+                                        <th>Pickup Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in Model.UnassignedPickups)
+                                    {
+                                        <tr>
+                                            <td>@booking.Id</td>
+                                            <td>@booking.Customer.FullName</td>
+                                            <td>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToShortDateString() : "Not scheduled")</td>
+                                            <td>
+                                                <a asp-area="Admin" asp-controller="Bookings" asp-action="AssignDriver" asp-route-id="@booking.Id" class="btn btn-sm btn-primary">Assign Driver</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No unassigned pickups.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Additional scripts for the admin dashboard can be added here -->
+} 

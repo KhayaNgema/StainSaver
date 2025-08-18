@@ -1,0 +1,144 @@
+@model StainSaver.Models.Review
+@using StainSaver.Models
+
+@{
+    ViewData["Title"] = "Write a Review";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">Write a Review</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="Customer" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">My Bookings</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.BookingId">Booking Details</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Write a Review</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Review for Booking #@Model.BookingId</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-area="Customer" asp-controller="Booking" asp-action="Review" method="post">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="CustomerId" />
+
+                        <div class="mb-4">
+                            <label asp-for="Rating" class="form-label">Rating</label>
+                            <div class="rating-input d-flex">
+                                @for (int i = 5; i >= 1; i--)
+                                {
+                                    <div class="form-check form-check-inline">
+                                        <input asp-for="Rating" class="form-check-input rating-star" type="radio" 
+                                               id="star@(i)" value="@i" checked="@(i == 5)" />
+                                        <label class="form-check-label" for="star@(i)">
+                                            <i class="fas fa-star fa-2x"></i>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <div class="d-flex justify-content-between" style="width: 150px;">
+                                <small>Excellent</small>
+                                <small>Poor</small>
+                            </div>
+                            <span asp-validation-for="Rating" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Comments" class="form-label">Your Comments</label>
+                            <textarea asp-for="Comments" class="form-control" rows="5" 
+                                      placeholder="Tell us about your experience with our service..."></textarea>
+                            <span asp-validation-for="Comments" class="text-danger"></span>
+                            <div class="form-text text-muted">
+                                <small>Please provide honest feedback to help us improve our service.</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Review
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.BookingId" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .rating-input {
+            direction: rtl;
+            display: inline-block;
+        }
+        
+        .rating-input .form-check {
+            display: inline-block;
+            margin: 0;
+        }
+        
+        .rating-input .form-check-input {
+            display: none;
+        }
+
+        .rating-input .form-check-label {
+            color: #ccc;
+            cursor: pointer;
+            padding: 0 0.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .rating-input .form-check-input:checked ~ .form-check-label,
+        .rating-input .form-check-label:hover,
+        .rating-input .form-check-label:hover ~ .form-check-label {
+            color: #FFD700;
+        }
+    </style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <!-- FontAwesome is already included in the layout -->
+    <script>
+        // Fix the star rating hover behavior
+        $(document).ready(function() {
+            // Set initial state
+            const currentRating = $('input[name="Rating"]:checked').val() || 5;
+            updateStars(currentRating);
+            
+            // Handle click events
+            $('.rating-input .form-check-input').change(function() {
+                updateStars($(this).val());
+            });
+            
+            function updateStars(rating) {
+                $('.rating-input .form-check-label').css('color', '#ccc');
+                $('.rating-input .form-check-input[value="' + rating + '"]')
+                    .prop('checked', true)
+                    .siblings('.form-check-label')
+                    .css('color', '#FFD700');
+                
+                // Color all stars to the left
+                $('.rating-input .form-check-input[value="' + rating + '"]')
+                    .closest('.form-check')
+                    .prevAll('.form-check')
+                    .find('.form-check-label')
+                    .css('color', '#FFD700');
+            }
+        });
+    </script>
+} 

@@ -1,0 +1,70 @@
+@model IEnumerable<StainSaver.Models.LaundryService>
+
+@{
+    ViewData["Title"] = "Update Service Prices";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>Update the prices of your laundry services in Rands.</p>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>Price Management</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Service Name</th>
+                            <th>Basket Size</th>
+                            <th>Current Price (ZAR)</th>
+                            <th>New Price (ZAR)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.Size</td>
+                                <td>R @item.Price.ToString("F2")</td>
+                                <td>
+                                    <form asp-action="UpdatePrice" asp-route-id="@item.Id" method="post" class="price-update-form">
+                                        <div class="input-group">
+                                            <span class="input-group-text">R</span>
+                                            <input type="number" name="price" class="form-control" value="@item.Price" min="0" step="0.01" />
+                                        </div>
+                                    </form>
+                                </td>
+                                <td>
+                                    <button type="submit" form="price-form-@item.Id" class="btn btn-primary btn-sm">
+                                        Update
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a asp-action="Index" class="btn btn-secondary">Back to Services</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Make the forms work with the Update button next to each row
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give each form an ID
+            document.querySelectorAll('.price-update-form').forEach(function(form, index) {
+                form.id = 'price-form-' + form.getAttribute('action').split('/').pop();
+            });
+        });
+    </script>
+} 

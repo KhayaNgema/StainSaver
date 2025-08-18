@@ -1,0 +1,61 @@
+@model List<StainSaver.Models.ApplicationUser>
+
+@{
+    ViewData["Title"] = "Staff Management";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>This page shows all users in the Staff role.</p>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2>Staff Members</h2>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>ID Number</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>@user.PhoneNumber</td>
+                                <td>@user.IdNumber</td>
+                                <td>
+                                    @user.StreetAddress, @user.Suburb, @user.City, @user.Province, @user.PostalCode
+                                </td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-primary btn-sm">Edit</a>
+                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-info btn-sm">Details</a>
+                                    <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-danger btn-sm">Delete</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>No staff members found.</p>
+            }
+        </div>
+    </div>
+    
+    <div>
+        <a asp-action="Create" class="btn btn-success">Create New Staff Member</a>
+        <a asp-action="Index" class="btn btn-secondary">Back to All Users</a>
+    </div>
+</div> 

@@ -1,0 +1,290 @@
+@model StainSaver.Areas.Customer.Models.BookingDetailsViewModel
+@using StainSaver.Areas.Customer.Models
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Booking Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4">Booking #@Model.Booking.Id</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="Customer" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">My Bookings</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Booking Details</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+            <div>
+                <span class="badge bg-primary fs-5 px-3 py-2">@Model.Booking.Status</span>
+                <div class="text-muted small mt-1">Last updated: @DateTime.Now.ToString("MMM dd, yyyy hh:mm:ss tt")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Booking Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Booking Date:</strong></p>
+                            <p>@Model.Booking.BookingDate.ToString("MMM dd, yyyy hh:mm tt")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Delivery Method:</strong></p>
+                            <p>
+                                @if (Model.Booking.DeliveryMethod == DeliveryMethod.DriverPickupAndDelivery)
+                                {
+                                    <span><i class="fas fa-truck me-2"></i>Pickup and delivery by driver</span>
+                                }
+                                else
+                                {
+                                    <span><i class="fas fa-store me-2"></i>Dropoff and pickup by client</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            @if (Model.Booking.DeliveryMethod == DeliveryMethod.DriverPickupAndDelivery)
+                            {
+                                <p class="mb-1"><strong>Pickup Date:</strong></p>
+                                <p>@(Model.Booking.PickupDate.HasValue ? Model.Booking.PickupDate.Value.ToString("MMM dd, yyyy hh:mm tt") : "Not scheduled")</p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            @if (Model.Booking.DeliveryDate.HasValue)
+                            {
+                                <p class="mb-1"><strong>Delivery Date:</strong></p>
+                                <p>@Model.Booking.DeliveryDate.Value.ToString("MMM dd, yyyy hh:mm tt")</p>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            @if (Model.Booking.Driver != null)
+                            {
+                                <p class="mb-1"><strong>Driver:</strong></p>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 fw-bold">@Model.Booking.Driver.FullName</p>
+                                        <small class="text-muted">@Model.Booking.Driver.PhoneNumber</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <p class="mb-1"><strong>Special Instructions:</strong></p>
+                            <p>@(string.IsNullOrEmpty(Model.Booking.SpecialInstructions) ? "None" : Model.Booking.SpecialInstructions)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Services</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detail in Model.Booking.BookingDetails)
+                                {
+                                    <tr>
+                                        <td>@detail.LaundryService.Name</td>
+                                        <td>@detail.Quantity</td>
+                                        <td>@detail.Price.ToString("C", zaCulture)</td>
+                                        <td>
+                                            @{
+                                                var badgeClass = "secondary";
+                                                switch (detail.Status)
+                                                {
+                                                    case "Pending":
+                                                        badgeClass = "secondary";
+                                                        break;
+                                                    case "Assigned":
+                                                        badgeClass = "info";
+                                                        break;
+                                                    case "Processing":
+                                                        badgeClass = "primary";
+                                                        break;
+                                                    case "Completed":
+                                                        badgeClass = "success";
+                                                        break;
+                                                }
+                                            }
+                                            <span class="badge bg-@badgeClass">@detail.Status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="2" class="text-end">Total:</td>
+                                    <td>@Model.Booking.TotalAmount.ToString("C", zaCulture)</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4 sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Order Status</h5>
+                        <a asp-action="Details" asp-route-id="@Model.Booking.Id" class="btn btn-sm btn-light" title="Refresh Status">
+                            <i class="fas fa-sync-alt"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.Pending || Model.Booking.Status == BookingStatus.Confirmed ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span>Booking Confirmed</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.Confirmed || Model.Booking.Status == BookingStatus.Pending)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.PickupAssigned ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-truck me-2"></i>
+                                    <span>Driver Assigned</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.PickupAssigned)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.PickedUp ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-hand-holding me-2"></i>
+                                    <span>Laundry Picked Up</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.PickedUp)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.StaffAssigned ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    <span>Staff Assigned</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.StaffAssigned)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.Processing ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-spinner me-2"></i>
+                                    <span>Processing</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.Processing)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.Completed ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-check-double me-2"></i>
+                                    <span>Laundry Completed</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.Completed)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group-item @(Model.Booking.Status == BookingStatus.Delivered ? "active" : "")">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-box me-2"></i>
+                                    <span>Delivered</span>
+                                </div>
+                                @if (Model.Booking.Status == BookingStatus.Delivered)
+                                {
+                                    <span class="badge bg-success rounded-pill">Current</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to My Bookings
+                </a>
+                @if (Model.Booking.Status == BookingStatus.Delivered || Model.Booking.Status == BookingStatus.Completed)
+                {
+                    <a asp-action="Review" asp-route-id="@Model.Booking.Id" class="btn btn-success">
+                        <i class="fas fa-star me-2"></i>Write a Review
+                    </a>
+                    <a asp-controller="Complains" asp-action="Complain" asp-route-bookingId="@Model.Booking.Id" class="btn btn-outline-primary">
+                        <i class="fas fa-comments me-2"></i>Add Complain/Refund
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- FontAwesome is already included in the layout -->
+} 

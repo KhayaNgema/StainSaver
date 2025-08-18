@@ -1,0 +1,115 @@
+@model IEnumerable<StainSaver.Models.Booking>
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "All Assigned Deliveries";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">All Assigned Deliveries</h1>
+        <div>
+            <a asp-area="Driver" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle me-2"></i> No deliveries have been assigned to you yet.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Booking #</th>
+                        <th>Customer</th>
+                        <th>Pickup Date</th>
+                        <th>Status</th>
+                        <th>Total Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in Model)
+                    {
+                        <tr>
+                            <td>@booking.Id</td>
+                            <td>@booking.Customer.FullName</td>
+                            <td>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("MMM dd, yyyy") : "Not scheduled")</td>
+                            <td>
+                                <span class="badge bg-@GetStatusBadgeColor(booking.Status)">@booking.Status</span>
+                            </td>
+                            <td>@booking.TotalAmount.ToString("C", zaCulture)</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-area="Driver" asp-controller="Tasks" asp-action="Details" asp-route-id="@booking.Id" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-info-circle"></i> Details
+                                    </a>
+                                    
+                                    @if (booking.Status == BookingStatus.PickupAssigned)
+                                    {
+                                        <a asp-area="Driver" asp-controller="Tasks" asp-action="MarkAsPickedUp" asp-route-id="@booking.Id" class="btn btn-success btn-sm"
+                                           onclick="return confirm('Are you sure you want to mark this as picked up?');">
+                                            <i class="fas fa-check"></i> Mark Picked Up
+                                        </a>
+                                    }
+                                    else if (booking.Status == BookingStatus.Completed)
+                                    {
+                                        <a asp-area="Driver" asp-controller="Tasks" asp-action="MarkAsDelivered" asp-route-id="@booking.Id" class="btn btn-success btn-sm"
+                                           onclick="return confirm('Are you sure you want to mark this as delivered?');">
+                                            <i class="fas fa-check"></i> Mark Delivered
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@functions {
+    public string GetStatusBadgeColor(BookingStatus status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "secondary",
+            BookingStatus.Confirmed => "info",
+            BookingStatus.PickupAssigned => "primary",
+            BookingStatus.PickedUp => "warning",
+            BookingStatus.Processing => "warning",
+            BookingStatus.StaffAssigned => "warning",
+            BookingStatus.Completed => "success",
+            BookingStatus.Delivered => "success",
+            BookingStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+} 

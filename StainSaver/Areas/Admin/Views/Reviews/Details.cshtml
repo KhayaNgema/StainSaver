@@ -1,0 +1,106 @@
+@model StainSaver.Models.Review
+@{
+    ViewData["Title"] = "Review Details";
+    var zaCulture = new System.Globalization.CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Reviews</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Review #@Model.Id</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Review Information</h2>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Review ID:</dt>
+                        <dd class="col-sm-8">@Model.Id</dd>
+                        
+                        <dt class="col-sm-4">Booking ID:</dt>
+                        <dd class="col-sm-8">
+                            <a asp-controller="Bookings" asp-action="Details" asp-route-id="@Model.BookingId"
+                               class="fw-bold text-decoration-none">
+                                #@Model.BookingId
+                            </a>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Customer:</dt>
+                        <dd class="col-sm-8">@Model.Customer?.FullName</dd>
+                        
+                        <dt class="col-sm-4">Rating:</dt>
+                        <dd class="col-sm-8">
+                            <div class="rating">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Model.Rating)
+                                    {
+                                        <i class="fas fa-star text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-star text-warning"></i>
+                                    }
+                                }
+                            </div>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Review Date:</dt>
+                        <dd class="col-sm-8">@Model.ReviewDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                    </dl>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Customer Comments</h5>
+                        </div>
+                        <div class="card-body">
+                            <blockquote class="blockquote mb-0">
+                                <p>@Model.Comments</p>
+                                <footer class="blockquote-footer">
+                                    <cite>@Model.Customer?.FullName</cite>
+                                </footer>
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h2 class="mb-0">Booking Services</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var detail in Model.Booking?.BookingDetails ?? new List<StainSaver.Models.BookingDetail>())
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@detail.LaundryService.Name</h5>
+                                    <small>@detail.Price.ToString("C", zaCulture)</small>
+                                </div>
+                                <p class="mb-1">@detail.LaundryService.Description</p>
+                                <small>Quantity: @detail.Quantity</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to List
+        </a>
+    </div>
+</div> 

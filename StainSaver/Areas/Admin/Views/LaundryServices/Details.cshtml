@@ -1,0 +1,69 @@
+@model StainSaver.Models.LaundryService
+
+@{
+    ViewData["Title"] = "Service Details";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2>@Model.Name</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.Name)</div>
+                <div class="col-md-9">@Html.DisplayFor(model => model.Name)</div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.Description)</div>
+                <div class="col-md-9">@Html.DisplayFor(model => model.Description)</div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.Size)</div>
+                <div class="col-md-9">@Html.DisplayFor(model => model.Size)</div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.Price)</div>
+                <div class="col-md-9">R @Html.DisplayFor(model => model.Price)</div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.IsActive)</div>
+                <div class="col-md-9">
+                    @if (Model.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Inactive</span>
+                    }
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold">@Html.DisplayNameFor(model => model.IsPremium)</div>
+                <div class="col-md-9">
+                    @if (Model.IsPremium)
+                    {
+                        <span class="badge bg-warning">Premium</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Standard</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </div>
+</div> 

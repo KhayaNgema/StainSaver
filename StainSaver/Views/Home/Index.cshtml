@@ -1,0 +1,259 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container-fluid home-container">
+    <div class="bento-grid">
+        <div class="hero-section">
+            <h1>Welcome to StainSaver</h1>
+            <p class="lead">Professional laundry services at your doorstep</p>
+           
+        </div>
+        
+        <div class="bento-card feature-card">
+            <div class="card-icon">
+                <i class="fas fa-truck-fast"></i>
+            </div>
+            <h3>Free Pickup & Delivery</h3>
+            <p>Convenient door-to-door service with no additional fees</p>
+        </div>
+        
+        <div class="bento-card feature-card">
+            <div class="card-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3>Quick Turnaround</h3>
+            <p>Fast service with options for same-day delivery</p>
+        </div>
+        
+        <div class="bento-card feature-card">
+            <div class="card-icon">
+                <i class="fas fa-shirt"></i>
+            </div>
+            <h3>Premium Care</h3>
+            <p>Eco-friendly cleaning products and expert handling</p>
+        </div>
+        
+        <div class="bento-card testimonial-card">
+            <div class="quote-icon">
+                <i class="fas fa-quote-left"></i>
+            </div>
+            <p class="testimonial-text">"StainSaver has transformed my laundry routine. Their service is exceptional and always on time!"</p>
+            <p class="testimonial-author">— Sindiswa Zuma</p>
+        </div>
+        
+        <div class="bento-card cta-card" id="services">
+            <h2>Ready to Save Time?</h2>
+            <p>Join thousands of satisfied customers who trust their laundry to us</p>
+            <a asp-area="Customer" asp-controller="Booking" asp-action="Create" class="btn btn-secondary">Book Now</a>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        :root {
+            --forest-green: rgb(70, 118, 70);
+            --forest-green-light: rgba(70, 118, 70, 0.2);
+            --forest-green-medium: rgba(70, 118, 70, 0.5);
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+        }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        
+        main {
+            padding: 0 !important;
+        }
+        
+        .home-container {
+            background: url('/images/images.jpg') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            min-height: calc(100vh - 60px); /* Adjust based on footer height */
+            width: 100%;
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .home-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(180px, auto);
+            gap: 1.5rem;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero-section {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hero-section .lead {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+        
+        .bento-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .bento-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .feature-card {
+            grid-column: span 4;
+            text-align: center;
+            border-bottom: 4px solid var(--forest-green);
+        }
+        
+        @@media (max-width: 992px) {
+            .feature-card {
+                grid-column: span 6;
+            }
+        }
+        
+        @@media (max-width: 768px) {
+            .feature-card {
+                grid-column: span 12;
+            }
+            
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--forest-green);
+        }
+        
+        .testimonial-card {
+            grid-column: span 6;
+            background-color: var(--forest-green);
+            color: var(--text-light);
+            border: none;
+        }
+        
+        @@media (max-width: 768px) {
+            .testimonial-card {
+                grid-column: span 12;
+            }
+        }
+        
+        .quote-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+        
+        .testimonial-text {
+            font-size: 1.25rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .testimonial-author {
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .cta-card {
+            grid-column: span 6;
+            background-color: white;
+            border: 3px solid var(--forest-green);
+            text-align: center;
+        }
+        
+        @@media (max-width: 768px) {
+            .cta-card {
+                grid-column: span 12;
+            }
+        }
+        
+        .btn-primary {
+            background-color: var(--forest-green);
+            border-color: var(--forest-green);
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: #3c6b3c;
+            border-color: #3c6b3c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            border-color: var(--forest-green);
+            color: var(--forest-green);
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--forest-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+}

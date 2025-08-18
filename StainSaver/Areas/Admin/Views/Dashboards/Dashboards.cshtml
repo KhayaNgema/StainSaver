@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Lost and Found Complains";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .dashboard-card {
+        background-color: transparent; /* No background color */
+        color: #265828; /* Text & icon color green */
+        border: 2px solid #265828; /* Green border */
+        border-radius: 8px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        text-decoration: none; /* Remove underline on links */
+    }
+
+        .dashboard-card:hover {
+            background-color: #265828; /* Green background on hover */
+            color: white; /* Text & icon white on hover */
+        }
+
+    .dashboard-icon {
+        font-size: 1.8rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        color: inherit;
+        transition: color 0.3s ease;
+    }
+
+    .dashboard-card:hover .dashboard-icon {
+        color: white;
+    }
+
+    .dashboard-text {
+        font-size: 1.25rem;
+        font-weight: 700;
+        user-select: none;
+    }
+</style>
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Dashboards</h2>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Home
+        </a>
+    </div>
+</div>
+<div class="container mt-4">
+    <a asp-action="BookingReports" class="dashboard-card col-12">
+        <i class="fas fa-file-alt dashboard-icon" aria-hidden="true"></i>
+        <span class="dashboard-text">Bookings Dashboard</span>
+    </a>
+
+    <a asp-action="LostAndFoundReports" class="dashboard-card col-12">
+        <i class="fas fa-box-open dashboard-icon" aria-hidden="true"></i>
+        <span class="dashboard-text">Lost &amp; Found Dashboard</span>
+    </a>
+
+    <a asp-action="RefundReports" class="dashboard-card col-12">
+        <i class="fas fa-dollar-sign dashboard-icon" aria-hidden="true"></i>
+        <span class="dashboard-text">Refunds Dashboard</span>
+    </a>
+</div>

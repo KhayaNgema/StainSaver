@@ -1,0 +1,54 @@
+﻿@model StainSaver.Areas.Admin.Models.PackageItemsViewModel
+<form id="completePackagingForm" enctype="multipart/form-data" method="post">
+
+    @Html.AntiForgeryToken()
+    <div class="mb-4">
+        <label class="form-label">Items in Complain</label>
+        <div class="complain-items-container">
+            @if (Model.Items != null && Model.Items.Any())
+            {
+                foreach (var item in Model.Items)
+                {
+                    <div class="complain-item d-flex align-items-center mb-3 p-2 border rounded" style="height:150px; width:100%;">
+                        <div class="item-image-container me-3" style="width:150px; height:130px; overflow:hidden; flex-shrink: 0;">
+                            <img src="~/@item.ImageFile" alt="@item.ItemDescription" style="width:100%; height:100%; object-fit:contain;" />
+                        </div>
+                        <div class="item-name flex-grow-1">
+                            <h5>@item.ItemDescription</h5>
+                        </div>
+                        <div class="me-3">
+<button type="button"
+        class="btn btn-outline-success btn-sm package-item-btn"
+        data-complain-id="@Model.ComplainId"
+        data-delivery-item-id="@item.LostOrFoundItemId"
+        @(item.IsPackaged ? "disabled" : "")>
+    @(item.IsPackaged ? "Packaged" : "Package Item")
+</button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>No items found for this complain.</p>
+            }
+        </div>
+    </div>
+    <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-success">Complete packaging</button>
+        <input type="hidden" asp-for="@Model.ComplainId" />
+    </div>
+</form>
+<style>
+    .complain-item {
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        background-color: #fefefe;
+    }
+    .item-image-container img {
+        border-radius: 8px;
+        user-select: none;
+        pointer-events: none;
+    }
+</style>
+
+

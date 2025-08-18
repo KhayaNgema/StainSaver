@@ -1,0 +1,495 @@
+@model StainSaver.Areas.Customer.Models.BookingViewModel
+@using StainSaver.Areas.Customer.Models
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Book Laundry Service";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">Book a Laundry Service</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="Customer" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">My Bookings</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">New Booking</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (ViewBag.Debug != null)
+    {
+        <div class="alert alert-info">
+            <h5>Debug Information</h5>
+            <pre class="small">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Debug, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }))</pre>
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            <h5>Error</h5>
+            <pre class="small">@ViewBag.Error</pre>
+            @if (ViewBag.StackTrace != null)
+            {
+                <details>
+                    <summary>Stack Trace</summary>
+                    <pre class="small">@ViewBag.StackTrace</pre>
+                </details>
+            }
+        </div>
+    }
+
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="Payment.Amount" id="totalAmount" value="0" />
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Select Services</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var service in Model.LaundryServices)
+                            {
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 service-card @(service.IsPremium ? "border-warning" : "")">
+                                        <div class="card-body">
+                                            <div class="custom-control custom-checkbox mb-2">
+                                                <input type="checkbox" name="service-checkbox" value="@service.Id" 
+                                                    class="custom-control-input service-checkbox" id="service-@service.Id"
+                                                    data-price="@service.Price">
+                                                <label class="custom-control-label" for="service-@service.Id">
+                                                    <h5 class="card-title">@service.Name</h5>
+                                                </label>
+                                                @if (service.IsPremium)
+                                                {
+                                                    <span class="badge bg-warning text-dark ms-2">Premium</span>
+                                                }
+                                            </div>
+                                            <p class="card-text">@service.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <p class="mb-0"><strong>@service.Price.ToString("C", zaCulture)</strong> / @service.Size.ToString()</p>
+                                                <div class="input-group quantity-input" style="width: 120px;">
+                                                    <span class="input-group-text btn btn-outline-secondary decrease-qty"
+                                                          data-service-id="@service.Id">-</span>
+                                                    <input type="number" name="quantities" value="0" min="0" max="10"
+                                                        class="form-control text-center quantity" data-service-id="@service.Id"
+                                                        data-price="@service.Price">
+                                                    <span class="input-group-text btn btn-outline-secondary increase-qty"
+                                                          data-service-id="@service.Id">+</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Item Count</h5>
+                        <small class="text-white-50">For safety tracking (does not affect pricing)</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BookingPreferences.TShirtsCount" class="form-label">T-Shirts</label>
+                                <input asp-for="BookingPreferences.TShirtsCount" class="form-control" min="0" />
+                                <span asp-validation-for="BookingPreferences.TShirtsCount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BookingPreferences.DressesCount" class="form-label">Dresses</label>
+                                <input asp-for="BookingPreferences.DressesCount" class="form-control" min="0" />
+                                <span asp-validation-for="BookingPreferences.DressesCount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BookingPreferences.TrousersCount" class="form-label">Trousers</label>
+                                <input asp-for="BookingPreferences.TrousersCount" class="form-control" min="0" />
+                                <span asp-validation-for="BookingPreferences.TrousersCount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BookingPreferences.BlanketsCount" class="form-label">Blankets</label>
+                                <input asp-for="BookingPreferences.BlanketsCount" class="form-control" min="0" />
+                                <span asp-validation-for="BookingPreferences.BlanketsCount" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Detergent & Laundry Bag</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="BookingPreferences.DetergentType" class="form-label">Preferred Detergent</label>
+                                <select asp-for="BookingPreferences.DetergentType" class="form-select" asp-items="Html.GetEnumSelectList<StainSaver.Models.DetergentType>()">
+                                </select>
+                                <span asp-validation-for="BookingPreferences.DetergentType" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    <input asp-for="BookingPreferences.LaundryBagRequired" class="form-check-input" type="checkbox" />
+                                    <label asp-for="BookingPreferences.LaundryBagRequired" class="form-check-label">I need a laundry bag</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Booking Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Method</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check">
+                                    <input asp-for="Booking.DeliveryMethod" type="radio" value="DriverPickupAndDelivery" class="form-check-input" id="deliveryMethodDriver" checked />
+                                    <label class="form-check-label" for="deliveryMethodDriver">
+                                        <i class="fas fa-truck me-2"></i>Pickup and delivery by driver
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input asp-for="Booking.DeliveryMethod" type="radio" value="ClientDropoffAndPickup" class="form-check-input" id="deliveryMethodClient" />
+                                    <label class="form-check-label" for="deliveryMethodClient">
+                                        <i class="fas fa-store me-2"></i>Dropoff and pickup by client
+                                    </label>
+                                </div>
+                            </div>
+                            <small class="text-muted">Choose whether you want our driver to handle the pickup and delivery or if you'll drop off and pick up the laundry yourself.</small>
+                        </div>
+
+                        <div class="mb-3" id="pickupDateContainer">
+                            <label asp-for="Booking.PickupDate" class="form-label">Pickup Date & Time</label>
+                            <input asp-for="Booking.PickupDate" class="form-control datepicker" type="datetime-local" id="pickupDateTime" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                            <span asp-validation-for="Booking.PickupDate" class="text-danger"></span>
+                            <div id="pickupDateError" class="text-danger" style="display:none;">Pickup date must be in the future.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Booking.SpecialInstructions" class="form-label">Special Instructions</label>
+                            <textarea asp-for="Booking.SpecialInstructions" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Booking.SpecialInstructions" class="text-danger"></span>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-body bg-light">
+                                <h6 class="card-title">Order Summary</h6>
+                                <div id="orderSummary">
+                                    <p class="text-muted">No services selected</p>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total Amount:</span>
+                                    <span id="displayTotalAmount">R0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input asp-for="BookingPreferences.TermsAccepted" class="form-check-input" type="checkbox" required />
+                            <label asp-for="BookingPreferences.TermsAccepted" class="form-check-label">
+                                I accept the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & Conditions</a>
+                            </label>
+                            <span asp-validation-for="BookingPreferences.TermsAccepted" class="text-danger d-block"></span>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Continue to Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Terms & Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms & Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>StainSaver Laundry Service Terms & Conditions</h4>
+                <p>By using our laundry services, you agree to the following terms:</p>
+                <ol>
+                    <li>StainSaver is not responsible for damage due to normal washing processes including color fading, shrinkage, or damage to delicate items.</li>
+                    <li>Please ensure all pockets are emptied before sending clothes for laundry.</li>
+                    <li>We will make reasonable efforts to remove stains, but cannot guarantee complete stain removal.</li>
+                    <li>Cancellations must be made at least 2 hours before the scheduled pickup time for a full refund.</li>
+                    <li>Payment is required at the time of booking.</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function () {
+            console.log('Document ready, initializing service form...');
+            
+            // Set minimum date for pickup datetime
+            const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 16);
+            $('#pickupDateTime').attr('min', formattedDate);
+            
+            // Show/hide pickup date based on delivery method
+            function togglePickupDateField() {
+                if ($('#deliveryMethodDriver').is(':checked')) {
+                    $('#pickupDateContainer').show();
+                    $('#pickupDateTime').prop('required', true);
+                } else {
+                    $('#pickupDateContainer').hide();
+                    $('#pickupDateTime').prop('required', false);
+                }
+            }
+            
+            // Initial check on page load
+            togglePickupDateField();
+            
+            // Listen for changes to the radio buttons
+            $('input[name="Booking.DeliveryMethod"]').change(function() {
+                togglePickupDateField();
+            });
+            
+            // Additional validation for pickup date
+            $('#pickupDateTime').on('change', function() {
+                const selectedDate = new Date($(this).val());
+                const currentDate = new Date();
+                
+                if (selectedDate <= currentDate) {
+                    $('#pickupDateError').show();
+                } else {
+                    $('#pickupDateError').hide();
+                }
+            });
+            
+            // Handle quantity increments
+            $('.increase-qty').click(function () {
+                var serviceId = $(this).data('service-id');
+                var input = $('input.quantity[data-service-id="' + serviceId + '"]');
+                var currentValue = parseInt(input.val());
+                input.val(Math.min(currentValue + 1, 10));
+                updateCheckbox(serviceId);
+                calculateTotal();
+                updateOrderSummary();
+                console.log('Increased quantity for service ' + serviceId + ' to ' + input.val());
+            });
+
+            // Handle quantity decrements
+            $('.decrease-qty').click(function () {
+                var serviceId = $(this).data('service-id');
+                var input = $('input.quantity[data-service-id="' + serviceId + '"]');
+                var currentValue = parseInt(input.val());
+                input.val(Math.max(currentValue - 1, 0));
+                updateCheckbox(serviceId);
+                calculateTotal();
+                updateOrderSummary();
+                console.log('Decreased quantity for service ' + serviceId + ' to ' + input.val());
+            });
+
+            // Update checkbox based on quantity
+            function updateCheckbox(serviceId) {
+                var input = $('input.quantity[data-service-id="' + serviceId + '"]');
+                var checkbox = $('#service-' + serviceId);
+                
+                if (parseInt(input.val()) > 0) {
+                    checkbox.prop('checked', true);
+                } else {
+                    checkbox.prop('checked', false);
+                }
+                console.log('Updated checkbox for service ' + serviceId + ' to ' + checkbox.is(':checked'));
+            }
+
+            // Handle checkbox changes
+            $('.service-checkbox').change(function () {
+                var serviceId = $(this).val();
+                var input = $('input.quantity[data-service-id="' + serviceId + '"]');
+                
+                if ($(this).is(':checked')) {
+                    // Ensure we set a minimum of 1 when checked
+                    if (parseInt(input.val()) <= 0) {
+                        input.val(1);
+                    }
+                } else {
+                    input.val(0);
+                }
+                
+                calculateTotal();
+                updateOrderSummary();
+                console.log('Checkbox changed for service ' + serviceId + ', checked=' + $(this).is(':checked') + ', quantity=' + input.val());
+            });
+
+            // Handle quantity input changes
+            $('.quantity').change(function () {
+                var serviceId = $(this).data('service-id');
+                var value = parseInt($(this).val());
+                
+                // Ensure value is at least 0
+                if (isNaN(value) || value < 0) {
+                    $(this).val(0);
+                }
+                
+                updateCheckbox(serviceId);
+                calculateTotal();
+                updateOrderSummary();
+                console.log('Quantity input changed for service ' + serviceId + ' to ' + $(this).val());
+            });
+            
+            // Calculate total amount
+            function calculateTotal() {
+                let total = 0;
+                let selectedServices = [];
+                
+                $('.quantity').each(function() {
+                    const quantity = parseInt($(this).val());
+                    const serviceId = $(this).data('service-id');
+                    const price = parseFloat($(this).data('price'));
+                    
+                    if (quantity > 0) {
+                        total += quantity * price;
+                        selectedServices.push({
+                            id: serviceId,
+                            quantity: quantity,
+                            price: price,
+                            total: quantity * price
+                        });
+                    }
+                });
+                
+                // Update hidden field
+                $('#totalAmount').val(total);
+                
+                // Update display
+                $('#displayTotalAmount').text('R' + total.toFixed(2));
+                
+                console.log('Calculated total: R' + total.toFixed(2));
+                console.log('Selected services:', selectedServices);
+            }
+            
+            // Update order summary
+            function updateOrderSummary() {
+                let summaryHtml = '';
+                let hasItems = false;
+                
+                $('.quantity').each(function() {
+                    const quantity = parseInt($(this).val());
+                    if (quantity > 0) {
+                        hasItems = true;
+                        const serviceId = $(this).data('service-id');
+                        const price = parseFloat($(this).data('price'));
+                        const serviceName = $('#service-' + serviceId).closest('.card-body').find('.card-title').text().trim();
+                        const itemTotal = quantity * price;
+                        
+                        summaryHtml += `<div class="d-flex justify-content-between mb-2">
+                                        <span>${quantity} x ${serviceName}</span>
+                                        <span>R${itemTotal.toFixed(2)}</span>
+                                      </div>`;
+                    }
+                });
+                
+                if (hasItems) {
+                    $('#orderSummary').html(summaryHtml);
+                } else {
+                    $('#orderSummary').html('<p class="text-muted">No services selected</p>');
+                }
+            }
+            
+            // Initialize 
+            calculateTotal();
+            
+            // Set initial values for all checkboxes
+            $('.service-checkbox').each(function() {
+                if ($(this).is(':checked')) {
+                    var serviceId = $(this).val();
+                    var input = $('input.quantity[data-service-id="' + serviceId + '"]');
+                    if (parseInt(input.val()) <= 0) {
+                        input.val(1);
+                    }
+                }
+            });
+            
+            // Add hidden input fields for services with quantities > 0 before form submit
+            $('form').on('submit', function(e) {
+                // Remove any previously added hidden fields
+                $('.dynamic-service-input').remove();
+                
+                let hasSelectedService = false;
+                
+                // Add hidden inputs for selected services based on quantities
+                $('.quantity').each(function() {
+                    const quantity = parseInt($(this).val());
+                    const serviceId = $(this).data('service-id');
+                    
+                    if (quantity > 0) {
+                        hasSelectedService = true;
+                        // Create and append a hidden input for this service
+                        $('<input>').attr({
+                            type: 'hidden',
+                            name: 'selectedServicesObj',
+                            value: serviceId,
+                            class: 'dynamic-service-input'
+                        }).appendTo($(this).closest('form'));
+                        
+                        // Add corresponding quantity input
+                        $('<input>').attr({
+                            type: 'hidden',
+                            name: 'quantities',
+                            value: quantity,
+                            class: 'dynamic-service-input'
+                        }).appendTo($(this).closest('form'));
+                        
+                        console.log('Added hidden input for service ID: ' + serviceId + ' with quantity: ' + quantity);
+                    }
+                });
+                
+                console.log('Form submitted. Has selected services:', hasSelectedService);
+                
+                if (!hasSelectedService) {
+                    e.preventDefault();
+                    alert('Please select at least one service with a quantity greater than zero');
+                    return false;
+                }
+                
+                return true;
+            });
+
+            // Log all service checkboxes and quantities for debugging
+            console.log('---- Services available on form ----');
+            $('.service-checkbox').each(function() {
+                var serviceId = $(this).val();
+                var checked = $(this).is(':checked');
+                var quantityInput = $('input.quantity[data-service-id="' + serviceId + '"]');
+                var quantity = parseInt(quantityInput.val());
+                console.log(`Service ${serviceId}: checked=${checked}, quantity=${quantity}`);
+            });
+        });
+    </script>
+} 

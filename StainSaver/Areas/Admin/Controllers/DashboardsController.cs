@@ -1,0 +1,51 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StainSaver.Data;
+using StainSaver.Models;
+using StainSaver.Services;
+
+namespace StainSaver.Areas.Admin.Controllers
+{
+    [Area("Admin")]
+    [Authorize(Roles = "Admin")]
+    public class DashboardsController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly FileUploadService _fileUploadService;
+        public DashboardsController(ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            FileUploadService fileUploadService)
+        {
+            _fileUploadService = fileUploadService;
+            _context = context;
+            _userManager = userManager;
+        }
+
+        public async Task<IActionResult> Dashboards()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> LostAndFoundReports()
+        {
+            return View();
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> BookingReports()
+        {
+            List<Booking> bookings = await _context.Bookings.ToListAsync();
+
+            return View(bookings);
+        }
+
+        public async Task<IActionResult> RefundReports()
+        {
+            return View();
+        }
+    }
+}

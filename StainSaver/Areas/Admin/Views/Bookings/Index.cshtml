@@ -1,0 +1,152 @@
+@model IEnumerable<StainSaver.Models.Booking>
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "All Bookings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>All Bookings</h1>
+        <div>
+            <a class="btn btn-outline-secondary me-2" data-bs-toggle="collapse" href="#filterOptions" role="button" aria-expanded="false" aria-controls="filterOptions">
+                <i class="fas fa-filter me-2"></i>Filter Options
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="collapse mb-4" id="filterOptions">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" asp-items="Html.GetEnumSelectList<BookingStatus>()">
+                                <option value="">All Statuses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date Range</label>
+                            <select name="dateRange" class="form-select">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" placeholder="Customer name, ID, etc.">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end mb-3">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Booking Date</th>
+                            <th>Pickup Date</th>
+                            <th>Status</th>
+                            <th>Driver</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in Model)
+                        {
+                            <tr>
+                                <td>@booking.Id</td>
+                                <td>
+                                    <div>@booking.Customer.FullName</div>
+                                    <small class="text-muted">@booking.Customer.Email</small>
+                                </td>
+                                <td>@booking.BookingDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Not scheduled")</td>
+                                <td>
+                                    <span class="badge bg-@GetStatusBadgeColor(booking.Status)">@booking.Status</span>
+                                </td>
+                                <td>
+                                    @if (booking.Driver != null)
+                                    {
+                                        <span>@booking.Driver.FullName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not Assigned</span>
+                                    }
+                                </td>
+                                <td>@booking.TotalAmount.ToString("C", zaCulture)</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if (booking.Status == BookingStatus.Confirmed)
+                                        {
+                                            <a asp-action="AssignDriver" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-truck"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeColor(BookingStatus status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "secondary",
+            BookingStatus.Confirmed => "info",
+            BookingStatus.PickupAssigned => "primary",
+            BookingStatus.PickedUp => "warning",
+            BookingStatus.Processing => "warning",
+            BookingStatus.StaffAssigned => "warning",
+            BookingStatus.Completed => "success",
+            BookingStatus.Delivered => "success",
+            BookingStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Update filters from query string
+            const urlParams = new URLSearchParams(window.location.search);
+            for (const [key, value] of urlParams) {
+                const element = $(`[name="${key}"]`);
+                if (element.length) {
+                    element.val(value);
+                }
+            }
+        });
+    </script>
+} 

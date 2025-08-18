@@ -1,0 +1,220 @@
+@model IEnumerable<StainSaver.Models.Booking>
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "My Tasks";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">My Tasks</h1>
+        <a asp-area="Driver" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-primary">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pickup-tab" data-bs-toggle="tab" data-bs-target="#pickup" type="button" role="tab" aria-controls="pickup" aria-selected="true">
+                Pickups <span class="badge bg-primary">@Model.Count(b => b.Status == BookingStatus.PickupAssigned)</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button" role="tab" aria-controls="processing" aria-selected="false">
+                Picked Up <span class="badge bg-warning">@Model.Count(b => b.Status == BookingStatus.PickedUp)</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab" aria-controls="delivery" aria-selected="false">
+                Ready for Delivery <span class="badge bg-success">@Model.Count(b => b.Status == BookingStatus.Completed)</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        <!-- Pickups Tab -->
+        <div class="tab-pane fade show active" id="pickup" role="tabpanel" aria-labelledby="pickup-tab">
+            @if (Model.Any(b => b.Status == BookingStatus.PickupAssigned))
+            {
+                <div class="row">
+                    @foreach (var booking in Model.Where(b => b.Status == BookingStatus.PickupAssigned))
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Booking #@booking.Id</h5>
+                                    <span class="badge bg-light text-dark">@booking.Status</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Customer:</strong></p>
+                                        <p>@booking.Customer.FullName</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Pickup Date:</strong></p>
+                                        <p>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("MMM dd, yyyy hh:mm tt") : "Not scheduled")</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Address:</strong></p>
+                                        <p>@booking.Customer.Address</p>
+                                    </div>
+                                    <p><strong>Total Amount:</strong> @booking.TotalAmount.ToString("C", zaCulture)</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <div class="d-flex justify-content-between">
+                                        <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-outline-primary">
+                                            <i class="fas fa-info-circle me-1"></i> Details
+                                        </a>
+                                        <a asp-action="MarkAsPickedUp" asp-route-id="@booking.Id" class="btn btn-success"
+                                           onclick="return confirm('Are you sure you want to mark this as picked up?');">
+                                            <i class="fas fa-check me-1"></i> Mark as Picked Up
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> No pending pickups at the moment.
+                </div>
+            }
+        </div>
+
+        <!-- Processing Tab -->
+        <div class="tab-pane fade" id="processing" role="tabpanel" aria-labelledby="processing-tab">
+            @if (Model.Any(b => b.Status == BookingStatus.PickedUp))
+            {
+                <div class="row">
+                    @foreach (var booking in Model.Where(b => b.Status == BookingStatus.PickedUp))
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Booking #@booking.Id</h5>
+                                    <span class="badge bg-light text-dark">@booking.Status</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Customer:</strong></p>
+                                        <p>@booking.Customer.FullName</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Pickup Date:</strong></p>
+                                        <p>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("MMM dd, yyyy hh:mm tt") : "Not scheduled")</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Address:</strong></p>
+                                        <p>@booking.Customer.Address</p>
+                                    </div>
+                                    <p><strong>Total Amount:</strong> @booking.TotalAmount.ToString("C", zaCulture)</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-info-circle me-1"></i> Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> No laundry is currently being processed.
+                </div>
+            }
+        </div>
+
+        <!-- Delivery Tab -->
+        <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
+            @if (Model.Any(b => b.Status == BookingStatus.Completed))
+            {
+                <div class="row">
+                    @foreach (var booking in Model.Where(b => b.Status == BookingStatus.Completed))
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Booking #@booking.Id</h5>
+                                    <span class="badge bg-light text-dark">@booking.Status</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Customer:</strong></p>
+                                        <p>@booking.Customer.FullName</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Pickup Date:</strong></p>
+                                        <p>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("MMM dd, yyyy hh:mm tt") : "Not scheduled")</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Address:</strong></p>
+                                        <p>@booking.Customer.Address</p>
+                                    </div>
+                                    <p><strong>Total Amount:</strong> @booking.TotalAmount.ToString("C", zaCulture)</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <div class="d-flex justify-content-between">
+                                        <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-outline-primary">
+                                            <i class="fas fa-info-circle me-1"></i> Details
+                                        </a>
+                                        <a asp-action="MarkAsDelivered" asp-route-id="@booking.Id" class="btn btn-success"
+                                           onclick="return confirm('Are you sure you want to mark this as delivered?');">
+                                            <i class="fas fa-check me-1"></i> Mark as Delivered
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> No laundry is ready for delivery.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize the tab functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            var triggerTabList = [].slice.call(document.querySelectorAll('#myTab a, #myTab button'))
+            triggerTabList.forEach(function (triggerEl) {
+                var tabTrigger = new bootstrap.Tab(triggerEl)
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault()
+                    tabTrigger.show()
+                })
+            })
+        });
+    </script>
+} 

@@ -1,0 +1,206 @@
+@model StainSaver.Models.Booking
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Booking Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Booking #@Model.Id</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Booking Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Booking Date</h6>
+                            <p>@Model.BookingDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Pickup Date</h6>
+                            <p>@(Model.PickupDate.HasValue ? Model.PickupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Not scheduled")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Status</h6>
+                            <span class="badge bg-@GetStatusBadgeColor(Model.Status)">@Model.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Special Instructions</h6>
+                            <p>@(string.IsNullOrEmpty(Model.SpecialInstructions) ? "No instructions provided" : Model.SpecialInstructions)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Total Amount</h6>
+                            <p class="fw-bold">@Model.TotalAmount.ToString("C", zaCulture)</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Driver</h6>
+                            @if (Model.Driver != null)
+                            {
+                                <p>@Model.Driver.FullName</p>
+                            }
+                            else
+                            {
+                                <p class="text-muted">Not Assigned</p>
+                                @if (Model.Status == BookingStatus.Confirmed)
+                                {
+                                    <a asp-action="AssignDriver" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-truck me-1"></i>Assign Driver
+                                    </a>
+                                }
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Delivery Date</h6>
+                            @if (Model.DeliveryDate.HasValue)
+                            {
+                                <p>@Model.DeliveryDate.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                            }
+                            else
+                            {
+                                <p class="text-muted">Not scheduled yet</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Order Items</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.BookingDetails)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div>@item.LaundryService.Name</div>
+                                            <small class="text-muted">@item.LaundryService.Description</small>
+                                        </td>
+                                        <td>@item.Quantity</td>
+                                        <td>@item.LaundryService.Price.ToString("C", zaCulture)</td>
+                                        <td>@((item.LaundryService.Price * item.Quantity).ToString("C", zaCulture))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Total</td>
+                                    <td class="fw-bold">@Model.TotalAmount.ToString("C", zaCulture)</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Name</h6>
+                        <p>@Model.Customer.FullName</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Email</h6>
+                        <p>@Model.Customer.Email</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Phone</h6>
+                        <p>@Model.Customer.PhoneNumber</p>
+                    </div>
+                    <a href="mailto:@Model.Customer.Email" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-envelope me-1"></i>Email
+                    </a>
+                    <a href="tel:@Model.Customer.PhoneNumber" class="btn btn-outline-primary">
+                        <i class="fas fa-phone me-1"></i>Call
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (Model.Status == BookingStatus.Confirmed && Model.Driver == null)
+                        {
+                            <a asp-action="AssignDriver" asp-route-id="@Model.Id" class="btn btn-primary">
+                                <i class="fas fa-truck me-2"></i>Assign Driver
+                            </a>
+                        }
+                        @if (Model.Status != BookingStatus.Cancelled)
+                        {
+                            <a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger"
+                               onclick="return confirm('Are you sure you want to cancel this booking?');">
+                                <i class="fas fa-ban me-2"></i>Cancel Booking
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeColor(BookingStatus status)
+    {
+        return status switch
+        {
+            BookingStatus.Pending => "secondary",
+            BookingStatus.Confirmed => "info",
+            BookingStatus.PickupAssigned => "primary",
+            BookingStatus.PickedUp => "warning",
+            BookingStatus.Processing => "warning",
+            BookingStatus.StaffAssigned => "warning",
+            BookingStatus.Completed => "success",
+            BookingStatus.Delivered => "success",
+            BookingStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+} 

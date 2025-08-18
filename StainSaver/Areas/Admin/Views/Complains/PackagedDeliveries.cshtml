@@ -1,0 +1,85 @@
+﻿@model IEnumerable<StainSaver.Models.Package>
+@using StainSaver.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = "Package List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+<style>
+    .barcode-image {
+        max-height: 100px;
+        max-width: 150px;
+        object-fit: contain;
+        border: 1px solid #ddd;
+        padding: 2px;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Packages</h2>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid">
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No packages found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Package Reference Number</th>
+                        <th>Customer Name</th>
+                        <th>Complain Reference</th>
+                        <th>Driver</th>
+                        <th>Barcode</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var package in Model)
+                    {
+                        <tr>
+                             <td>@package.ReferenceNumber</td>
+                            <td>@package.Complain?.Customer?.FullName</td>
+                            <td>@package.Complain?.ReferenceNumber</td>
+                           
+                             <td>@(package.Driver?.FullName ?? "N/A")</td>
+
+                            <td>
+                                @if (package.BarcodeImage != null && package.BarcodeImage.Length > 0)
+                                {
+                                    var base64 = Convert.ToBase64String(package.BarcodeImage);
+                                    var imgSrc = $"data:image/png;base64,{base64}";
+                                    <img src="@imgSrc" alt="Barcode" class="barcode-image" />
+                                }
+                                else
+                                {
+                                    <span>No barcode</span>
+                                }
+                            </td>
+                            <td>@package.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <a asp-action="PackageDetails" asp-route-id="@package.PackageId" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

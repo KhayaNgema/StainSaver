@@ -1,0 +1,132 @@
+﻿@model List<StainSaver.Models.DeliveryItem>
+@{
+    ViewData["Title"] = "Receive Items";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .order-item-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 8px;
+    }
+    .order-item-card.found {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        font-weight: 600;
+    }
+    .order-item-info {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .order-item-info img {
+        max-width: 100px;
+        max-height: 100px;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+    .found-btn {
+        min-width: 120px;
+    }
+    .hidden-radio {
+        display: none;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <h2 class="mb-0 text-white">Receive Items</h2>
+    </div>
+</div>
+
+<div class="container-fluid px-4" style="margin-top: 10px;">
+    <h4 class="mb-2 text-center text-dark fw-bold">Complain Reference: @ViewBag.ComaplainReference</h4>
+    <h5 class="mb-3 text-center text-dark fw-bold">Package Reference: @ViewBag.PackageReference</h5>
+    <p class="mb-3 fw-semibold text-center" style="font-size: 1.2rem; color: black;">
+        Please indicate which items you found inside the package after unwrapping the seal, and mark those that are missing.
+    </p>
+
+    <form asp-controller="Deliveries" asp-action="CollectPackage" method="post">
+        <input type="hidden" name="packageId" value="@ViewBag.PackageId" />
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="row g-3">
+                    @foreach (var item in Model)
+                    {
+                        var lostOrFound = item.LostOrFoundItem;
+                        bool isCollected = item.IsCollected;
+                        <div class="col-12 col-md-4">
+                            <div class="order-item-card @(isCollected ? "found" : "")" id="order-item-@item.DeliveryItemId">
+                                <div class="order-item-info">
+                                    <div>
+                                        <strong>@lostOrFound?.ItemDescription</strong><br />
+                                        @if (!string.IsNullOrEmpty(lostOrFound?.ImageUrl))
+                                        {
+                                            <img src="~/@lostOrFound.ImageUrl" alt="Image of @lostOrFound.ItemDescription" />
+                                        }
+                                    </div>
+                                </div>
+                                <input type="radio" name="FoundItems" value="@item.DeliveryItemId" class="hidden-radio" id="found-@item.DeliveryItemId" @(isCollected ? "checked" : "") />
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    <button type="button" class="btn btn-outline-success found-btn" data-item-id="@item.DeliveryItemId" @(isCollected ? "disabled" : "")>
+                                        @(isCollected ? "Received" : "Inside Package ")<i class="fas fa-check-circle fa-md"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger found-btn" data-item-id="@item.DeliveryItemId" @(isCollected ? "disabled" : "")>
+                                        @(isCollected ? "Received" : "Missing ")<i class="fas fa-times fa-md"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="bill-summary-box d-flex justify-content-end bg-white shadow rounded p-3">
+            <button type="submit" style="background-color:#48AAAD; color:white; max-width: 250px;" class="btn">
+                <i class="fas fa-check-circle fa-lg"></i> Complete Collection
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function () {
+        $('.found-btn').on('click', function () {
+            var button = $(this);
+            var itemId = button.data('item-id');
+            var radioInput = $('#found-' + itemId);
+            if (!radioInput.prop('checked')) {
+                $.ajax({
+                    url: '@Url.Action("MarkItemAsCollected", "Deliveries")',
+                    type: 'POST',
+                    data: { itemId: itemId },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            radioInput.prop('checked', true);
+                            $('#order-item-' + itemId).addClass('found');
+                            button.text('Collected').prop('disabled', true);
+                        } else {
+                            alert(response.message || 'Failed to update item.');
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while updating the item.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+}

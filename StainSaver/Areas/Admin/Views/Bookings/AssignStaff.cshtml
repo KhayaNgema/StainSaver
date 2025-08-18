@@ -1,0 +1,78 @@
+@model StainSaver.Areas.Admin.Models.AssignStaffViewModel
+
+@{
+    ViewData["Title"] = "Assign Staff";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Assign Staff to Booking Detail #@Model.BookingDetailId</h1>
+        <div>
+            <a asp-action="Details" asp-route-id="@(Model.BookingDetail?.BookingId)" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Details
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Select Staff Member</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AssignStaff" method="post" id="assignStaffForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="BookingDetailId" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="StaffId" class="form-label">Staff Member</label>
+                            <select asp-for="StaffId" asp-items="Model.StaffMembers" class="form-select">
+                                <option value="">-- Select a Staff Member --</option>
+                            </select>
+                            <span asp-validation-for="StaffId" class="text-danger"></span>
+                            <div class="form-text">Select a staff member to process this booking.</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="assignStaffBtn">
+                                <i class="fas fa-user-tie me-2"></i>Assign Staff
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Enable client-side validation
+            $("#assignStaffForm").validate({
+                rules: {
+                    StaffId: {
+                        required: true
+                    }
+                },
+                messages: {
+                    StaffId: {
+                        required: "Please select a staff member"
+                    }
+                },
+                errorElement: "span",
+                errorClass: "text-danger"
+            });
+            
+            // Ensure form submission works
+            $("#assignStaffBtn").click(function(e) {
+                if ($("#assignStaffForm").valid()) {
+                    $("#assignStaffForm").submit();
+                }
+            });
+        });
+    </script>
+} 

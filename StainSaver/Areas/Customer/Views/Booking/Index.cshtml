@@ -1,0 +1,112 @@
+@model IEnumerable<StainSaver.Models.Booking>
+@using StainSaver.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "My Bookings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+}
+
+<div class="container mt-4">
+    <!-- Payment Success Message -->
+    @if (TempData["PaymentSuccess"] != null && (bool)TempData["PaymentSuccess"])
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle me-3 fa-2x"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Payment Successful!</h5>
+                    <p class="mb-0">Your booking has been confirmed. Transaction Reference: @TempData["TransactionReference"]</p>
+                    @if (TempData["BookingId"] != null)
+                    {
+                        <p class="mt-2 mb-0">
+                            <a href="@Url.Action("Details", new { id = TempData["BookingId"] })" class="alert-link">
+                                <i class="fas fa-info-circle me-1"></i> View Booking Details
+                            </a>
+                        </p>
+                    }
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4">My Bookings</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> New Booking
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var booking in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Booking #@booking.Id</h5>
+                            <span class="badge bg-light text-dark">@booking.Status</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Booking Date:</strong></p>
+                                    <p>@booking.BookingDate.ToString("MMM dd, yyyy hh:mm tt")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Pickup Date:</strong></p>
+                                    <p>@(booking.PickupDate.HasValue ? booking.PickupDate.Value.ToString("MMM dd, yyyy hh:mm tt") : "Not scheduled")</p>
+                                </div>
+                            </div>
+
+                            <p class="mb-1"><strong>Services:</strong></p>
+                            <ul class="list-group list-group-flush mb-3">
+                                @foreach (var detail in booking.BookingDetails)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        @detail.LaundryService.Name
+                                        <span class="badge bg-primary rounded-pill">x@(detail.Quantity)</span>
+                                    </li>
+                                }
+                            </ul>
+
+                            <p><strong>Total Amount:</strong> @booking.TotalAmount.ToString("C", zaCulture)</p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-outline-primary">
+                                    <i class="fas fa-info-circle"></i> Details
+                                </a>
+                                @if (booking.Status == StainSaver.Models.BookingStatus.Delivered || 
+                                    booking.Status == StainSaver.Models.BookingStatus.Completed)
+                                {
+                                    <a asp-action="Review" asp-route-id="@booking.Id" class="btn btn-outline-success">
+                                        <i class="fas fa-star"></i> Review
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">No bookings yet!</h4>
+            <p>You haven't made any laundry bookings yet. Click the "New Booking" button to place your first order.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+} 

@@ -1,0 +1,202 @@
+﻿@model IEnumerable<StainSaver.Models.Complain>
+@using StainSaver.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = "Refund Complains";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var zaCulture = new CultureInfo("en-ZA");
+    string NormalizePath(string path) => string.IsNullOrWhiteSpace(path) ? path : path.Replace("\\", "/");
+}
+<style>
+    /* Zoomable image styles */
+    .zoomable-image {
+        cursor: zoom-in;
+        transition: transform 0.3s ease;
+        max-height: 85vh;
+        max-width: 100%;
+        user-select: none;
+    }
+    .zoomed {
+        cursor: zoom-out;
+        transform: scale(2); /* Adjust zoom scale as needed */
+        transition: transform 0.3s ease;
+    }
+</style>
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between px-3 py-3 mb-4" style="background-color:#265828;">
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0 text-white">Refund Complains</h2>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+<div class="container-fluid mt-4">
+    @if (!Model.Any(c => c.ComplainType == ComplainType.Refund))
+    {
+        <div class="alert alert-info">No refund complains found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#Ref No.</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Bank Name</th>
+                        <th>Account Type</th>
+                        <th>Account Number</th>
+                        <th>Refund Reason</th>
+                        @* <th>Refund Items</th> *@
+                        @* <th>Proof of Payment</th> *@
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var complain in Model.Where(c => c.ComplainType == ComplainType.Refund))
+                    {
+                        var proofOfPaymentPath = NormalizePath(complain.ProofOfPayment);
+                        var proofPaymentModalId = $"modalProofPayment_{complain.ComplainId}";
+
+                        // Collect proof of damage images from RefundItems if such property exists,
+                        // else this example assumes RefundItems have ImageUrl which can be proof of damage.
+                        var proofOfDamageItems = complain.RefundItems?.Where(ri => !string.IsNullOrWhiteSpace(ri.ImageUrl)).ToList();
+
+                        <tr>
+                            <td>@complain.ReferenceNumber</td>
+                            <td>
+                                <div>@complain.Customer?.FullName</div>
+                                <small class="text-muted">@complain.Customer?.Email</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-@GetStatusBadgeColor(complain.Status)">
+                                    @complain.Status.GetDisplayName()
+                                </span>
+                            </td>
+                            <td>
+                                @if (complain.Bank.HasValue)
+                                {
+                                    @complain.Bank.Value.GetDisplayName()
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                @if (complain.BankAccountType.HasValue)
+                                {
+                                    @complain.BankAccountType.Value.GetDisplayName()
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(complain.BankAccountNumber))
+                                {
+                                    @complain.BankAccountNumber
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                @if (complain.ReasonForRefund.HasValue)
+                                {
+                                    @complain.ReasonForRefund.Value.GetDisplayName()
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Not specified</span>
+                                }
+                            </td>
+                            @* <td>
+                                @if (complain.RefundItems != null && complain.RefundItems.Any())
+                                {
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var item in complain.RefundItems)
+                                        {
+                                            <li class="mb-2">
+                                                <strong>@item.RefundItemName</strong><br />
+                                                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                                {
+                                                    var imgPath = NormalizePath(item.ImageUrl);
+                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Refund Item Image" class="img-thumbnail" style="max-height:80px; max-width:80px; cursor:pointer;"
+                                                         data-bs-toggle="modal" data-bs-target="#refundItemModal_@item.RefundItemId" />
+                                                    <div class="modal fade" id="refundItemModal_@item.RefundItemId" tabindex="-1" aria-labelledby="refundItemModalLabel_@item.RefundItemId" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="refundItemModalLabel_@item.RefundItemId">@item.RefundItemName</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body text-center">
+                                                                    <img src="@Url.Content($"~/{imgPath}")" alt="Refund Item Image" class="img-fluid zoomable-image"
+                                                                         onclick="this.classList.toggle('zoomed')" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td> *@
+                            @* <td>
+                                @if (!string.IsNullOrWhiteSpace(proofOfPaymentPath))
+                                {
+                                    <img src="@Url.Content($"~/{proofOfPaymentPath}")"
+                                         alt="Proof of Payment"
+                                         class="img-thumbnail"
+                                         style="max-height: 80px; max-width: 80px; object-fit: cover; cursor: pointer;"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#@proofPaymentModalId" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td> *@
+                            <td>
+                                <a asp-action="Details" asp-route-id="@complain.ComplainId" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+@functions {
+    public string GetStatusBadgeColor(ComplainStatus status) => status switch
+    {
+        ComplainStatus.Review => "secondary",
+        ComplainStatus.Approved => "success",
+        ComplainStatus.Rejected => "danger",
+        ComplainStatus.DriverAssigned => "info",
+        ComplainStatus.Returned => "warning",
+        ComplainStatus.Collected => "primary",
+        ComplainStatus.Refunded => "success",
+        _ => "secondary",
+    };
+
+    public string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return path;
+        return path.Replace("\\", "/");
+    }
+}
