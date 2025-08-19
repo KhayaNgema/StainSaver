@@ -37,7 +37,7 @@ namespace StainSaver.Services
             var phone = customer.PhoneNumber;
             var email = customer.Email;
 
-            string baseUrl = "https://20.164.17.133:2005";
+            string baseUrl = "https://20.164.17.133:2007";
             string encodedPackageId = WebUtility.UrlEncode(delivery.Package.PackageId.ToString());
             string receiveDeliveryLink = $"{baseUrl}/Customer/Complains/ScanPackage?packageId={encodedPackageId}";
 

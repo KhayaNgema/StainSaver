@@ -14,7 +14,7 @@ namespace StainSaver.Models
             public Complain Complain { get; set; }
 
             [Display(Name = "Item Description")]
-            public string ItemDescription { get; set; }
+            public string? ItemDescription { get; set; }
 
             [Display(Name = "Image of Lost or Found Item")]
             public string ImageUrl { get; set; }
