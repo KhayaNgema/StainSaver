@@ -197,18 +197,21 @@ namespace StainSaver.Areas.Driver.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmPickUp(int pickupId, string Comments)
+        public async Task<IActionResult> ConfirmPickUp(int pickupId, string Comments, string OtpCode)
         {
-
             var pickUp = await _context.PickUps
                 .Include(p => p.Complain)
                 .Where(p => p.PickUpId == pickupId)
                 .FirstOrDefaultAsync();
-         
 
             if (pickUp == null)
             {
                 return NotFound(new { success = false, message = "Pick-Up not found" });
+            }
+
+            if (string.IsNullOrEmpty(OtpCode) || !OtpCode.Equals(pickUp.OTP, StringComparison.Ordinal))
+            {
+                return BadRequest(new { success = false, message = "Invalid OTP code." });
             }
 
             var complain = pickUp.Complain;
@@ -224,6 +227,7 @@ namespace StainSaver.Areas.Driver.Controllers
 
             return Ok(new { success = true });
         }
+
 
 
         // Controller action method

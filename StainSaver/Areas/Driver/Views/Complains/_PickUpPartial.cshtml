@@ -36,17 +36,21 @@
         <textarea asp-for="Comments" class="form-control" rows="3" placeholder="Enter comments on item condition"></textarea>
     </div>
 
-    <div class="mb-3 d-flex align-items-center">
-        <label for="OtpCode" class="form-label me-3">OTP Code</label>
-        <input type="text" id="OtpCode" name="OtpCode" class="form-control me-2"
-               maxlength="6" minlength="6" pattern="\d{6}"
-               placeholder="Enter 6 digit OTP code"
-               required style="max-width: 150px;" />
-        <button type="button" id="verifyOtpBtn" class="btn btn-outline-success" aria-label="Verify OTP Code">
-            Verify
-            <span id="otpSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-            <span id="otpStatusIcon" class="ms-2" aria-live="polite"></span>
-        </button>
+    <div class="mb-3 d-flex flex-column align-items-start">
+        <div class="d-flex align-items-center w-100">
+            <label for="OtpCode" class="form-label me-3">OTP Code</label>
+            <input type="text" id="OtpCode" name="OtpCode" class="form-control me-2"
+                   maxlength="6" minlength="6" pattern="\d{6}"
+                   placeholder="Enter 6 digit OTP code"
+                   required style="max-width: 150px;" />
+            <button type="button" id="verifyOtpBtn" class="btn btn-outline-success" aria-label="Verify OTP Code">
+                Verify
+                <span id="otpSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                <span id="otpStatusIcon" class="ms-2" aria-live="polite"></span>
+            </button>
+        </div>
+        <!-- Error message below OTP field -->
+        <div id="otpErrorMessage" style="color: red; margin-top: 0.25rem; font-size: 0.9rem; display: none;"></div>
     </div>
 
     <div class="d-grid mt-4">
@@ -65,3 +69,9 @@
         pointer-events: none;
     }
 </style>
+
+@section Scripts {
+<script>
+  
+</script>
+}

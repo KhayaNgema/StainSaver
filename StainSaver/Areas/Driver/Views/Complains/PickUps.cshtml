@@ -196,13 +196,14 @@
         </div>
     }
 </div>
+
 <!-- Confirm Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1">
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-md modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Confirm Pick-Up</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="confirmModalTitle">Confirm Pick-Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="confirmModalBody">
         <div class="text-center py-5">
@@ -213,20 +214,25 @@
     </div>
   </div>
 </div>
+
 @section Scripts {
 <script>
     $(function () {
         var token = $('input[name="__RequestVerificationToken"]').val();
 
-        // Helper function to update status text and class
+        function showOtpError(message) {
+            $('#otpErrorMessage').text(message).show();
+        }
+
+        function clearOtpError() {
+            $('#otpErrorMessage').hide().text('');
+        }
+
         function updateStatus(pickupId, newStatus) {
             var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
             var statusDiv = card.find('.order-status');
             statusDiv.text(newStatus);
-
-            // Remove previous status classes
             statusDiv.removeClass('status-default status-warning status-success');
-
             switch (newStatus) {
                 case 'DriverAssigned':
                     statusDiv.addClass('status-default');
@@ -242,37 +248,25 @@
             }
         }
 
-        // Helper to replace Pick-up button with Confirm button on status change to PickingUp
         function switchToConfirmButton(pickupId) {
             var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
             var footer = card.find('.card-footer');
-
-            // Remove the Pick-up button
             footer.find('.btn-pickup-action').remove();
-
-            // Add Confirm button
             var btnConfirm = $(`
                 <button class="btn btn-small btn-confirm" data-pickup-id="${pickupId}" type="button">
                     <i class="fas fa-check fa-lg"></i> Confirm Item
                 </button>
             `);
-
-            // Insert Confirm button before See Location button
             footer.prepend(btnConfirm);
         }
 
-        // Pick-up button AJAX: update status & buttons on success
         $('.btn-pickup-action').on('click', function () {
             var btn = $(this);
             var pickupId = btn.data('pickup-id');
             btn.prop('disabled', true);
-
             $.post('/Driver/Complains/PickUp', { pickupId: pickupId, __RequestVerificationToken: token })
                 .done(function () {
-                    // Update status text & class in card header to "PickingUp"
                     updateStatus(pickupId, 'PickingUp');
-
-                    // Switch Pick-up button to Confirm button
                     switchToConfirmButton(pickupId);
                 })
                 .fail(function () {
@@ -281,37 +275,40 @@
                 });
         });
 
-        // See Location button
         $('.btn-view-map').on('click', function () {
             var id = $(this).data('pickup-id');
             window.open('/Driver/PickUps/Map/' + id, '_blank');
         });
 
-        // Confirm button: load partial in modal
         $(document).on('click', '.btn-confirm', function () {
             var id = $(this).data('pickup-id');
             $('#confirmModalBody').html('<div class="text-center py-5"><div class="spinner-border"></div><div>Loading...</div></div>');
             $.get('/Driver/Complains/LoadPickUpPartial?pickUpId=' + id, function (data) {
                 $('#confirmModalBody').html(data);
                 $('#confirmModal').modal('show');
-                initConfirmPickupForm(); // rebind JS inside modal if needed
+                initConfirmPickupForm();
             });
         });
 
-        // Bind OTP Verify button click inside modals or loaded content
+        // OTP Verify button click inside modal
         $(document).on('click', '#verifyOtpBtn', function () {
+            clearOtpError();
+
             var btn = $(this);
             var otp = $('#OtpCode').val();
             var pickupId = $('#PickUpId').val();
             var spinner = $('#otpSpinner');
             var icon = $('#otpStatusIcon');
             icon.html('');
+
             if (!$('#OtpCode')[0].checkValidity()) {
-                alert('Please enter a valid 6-digit OTP code.');
+                showOtpError('Please enter a valid 6-digit OTP code.');
                 return;
             }
+
             spinner.removeClass('d-none');
             btn.prop('disabled', true);
+
             $.ajax({
                 url: '@Url.Action("VerifyOtp", "Complains", new { area = "Driver" })',
                 type: 'POST',
@@ -324,22 +321,25 @@
                     btn.prop('disabled', false);
                     if (data.success) {
                         icon.html('<i class="text-success fas fa-check-circle"></i>');
+                        clearOtpError();
                     } else {
                         icon.html('<i class="text-danger fas fa-times-circle"></i>');
-                        alert(data.message);
+                        showOtpError(data.message || 'Invalid or incorrect OTP code.');
                     }
                 },
                 error: function () {
                     spinner.addClass('d-none');
                     btn.prop('disabled', false);
-                    alert('An error occurred during OTP verification.');
+                    showOtpError('An error occurred during OTP verification.');
                 }
             });
         });
 
-        // Confirm Pick-Up form submission via AJAX
+        // Confirm Pick-Up form submission via AJAX with inline error below OTP input
         $(document).on('submit', '#confirmPickUpForm', function (e) {
             e.preventDefault();
+            clearOtpError();
+
             var form = this;
             var fd = new FormData(form);
             var pickupId = fd.get('PickUpId');
@@ -353,31 +353,26 @@
             .then(data => {
                 if (data.success) {
                     alert('Pick-Up confirmed successfully.');
-
-                    // Close modal
                     $('#confirmModal').modal('hide');
-
-                    // Update status text & class in card header to "Completed"
                     updateStatus(pickupId, 'Completed');
-
-                    // Disable Confirm button and update text to "Confirmed"
                     var card = $('.order-card-col[data-pickup-id="' + pickupId + '"]');
                     var confirmBtn = card.find('.btn-confirm');
-
                     confirmBtn.prop('disabled', true).html('<i class="fas fa-check fa-lg"></i> Confirmed');
                 } else {
-                    alert('Failed to confirm pick-up.');
+                    // Show error below OTP field (no alert)
+                    showOtpError(data.message || 'Invalid OTP or failed to confirm pick-up.');
                 }
             })
             .catch(() => {
-                alert('An error occurred during confirmation.');
+                showOtpError('An error occurred during confirmation.');
             });
         });
     });
 
-    // Function to rebind form events after modal partial load (currently no special logic needed)
     function initConfirmPickupForm() {
-        // Event delegation used, so no explicit rebinding required here.
+        // No special rebinding needed since event delegation is used
     }
 </script>
 }
+
+
